@@ -4,36 +4,54 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
+
+// Screens
+import LoginScreen from "./pages/LoginScreen";
+import SignUpScreen from "./pages/SignUpScreen";
 import DashboardScreen from "./pages/DashboardScreen";
-import RegisterScreen from "./pages/RegisterScreen";
+import RegisterPlantScreen from "./pages/RegisterPlantScreen";
 import NotificationsScreen from "./pages/NotificationsScreen";
-import SimulationScreen from "./pages/SimulationScreen";
+import SettingsScreen from "./pages/SettingsScreen";
+import CartScreen from "./pages/CartScreen";
+import SearchScreen from "./pages/SearchScreen";
+import ProfileScreen from "./pages/ProfileScreen";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import { PlantProvider } from "./contexts/PlantContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <PlantProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardScreen />} />
-              <Route path="/register" element={<RegisterScreen />} />
-              <Route path="/notifications" element={<NotificationsScreen />} />
-              <Route path="/simulation" element={<SimulationScreen />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-      </TooltipProvider>
-    </PlantProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <PlantProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginScreen />} />
+                <Route path="/signup" element={<SignUpScreen />} />
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardScreen />} />
+                  <Route path="/register-plant" element={<RegisterPlantScreen />} />
+                  <Route path="/notifications" element={<NotificationsScreen />} />
+                  <Route path="/settings" element={<SettingsScreen />} />
+                  <Route path="/cart" element={<CartScreen />} />
+                  <Route path="/search" element={<SearchScreen />} />
+                  <Route path="/profile" element={<ProfileScreen />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </PlantProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

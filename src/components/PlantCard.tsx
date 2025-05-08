@@ -1,84 +1,125 @@
 
 import { useState } from "react";
 import { Plant } from "../models/PlantModel";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Thermometer, Droplet, Sun } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trash2, Thermometer, Droplet } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { usePlantContext } from "@/contexts/PlantContext";
+import { toast } from "sonner";
 
 interface PlantCardProps {
   plant: Plant;
-  onClick?: () => void;
 }
 
-export default function PlantCard({ plant, onClick }: PlantCardProps) {
+export default function PlantCard({ plant }: PlantCardProps) {
+  const { removePlant } = usePlantContext();
+  const [open, setOpen] = useState(false);
+  
+  const handleDelete = () => {
+    removePlant(plant.id);
+    toast.success("Plant removed successfully");
+    setOpen(false);
+  };
+  
   const isTemperatureOk = 
     plant.status.temperature >= plant.environment.temperature.min &&
     plant.status.temperature <= plant.environment.temperature.max;
-  
-  const isLightOk = 
-    plant.status.light >= plant.environment.light.min &&
-    plant.status.light <= plant.environment.light.max;
   
   const isHumidityOk = 
     plant.status.humidity >= plant.environment.humidity.min &&
     plant.status.humidity <= plant.environment.humidity.max;
 
-  const getStatusEmoji = (isOk: boolean) => isOk ? "😊" : "😢";
-
   return (
-    <Card 
-      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={onClick}
-    >
-      <div className="relative h-48 overflow-hidden">
+    <Card className="plant-card border-0 relative">
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-2 right-2 z-10 bg-white/70 hover:bg-white/90 text-gray-500 rounded-full p-1 w-8 h-8"
+          >
+            <Trash2 size={16} />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className="rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {plant.name} from your plant collection.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 rounded-full"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <div className="relative h-40 overflow-hidden">
         <img 
           src={plant.image} 
           alt={plant.name} 
           className="w-full h-full object-cover"
           onError={(e) => {
-            // Fallback image if the plant image fails to load
-            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?q=80&w=500";
+            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500";
           }}
         />
-      </div>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl">{plant.name}</CardTitle>
-          <Badge variant="outline">{plant.type}</Badge>
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-3">
+          <div className="flex justify-between">
+            <div>
+              <h3 className="text-white font-medium text-lg">{plant.name}</h3>
+              <p className="text-white/80 text-xs">{plant.species}</p>
+            </div>
+            <div className="bg-plant-green/90 text-white text-xs font-semibold px-2 py-1 rounded-full self-start">
+              {plant.location}
+            </div>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center p-2 rounded-lg bg-muted">
-            <div className="flex items-center mb-1">
-              <Thermometer size={16} className="mr-1" />
-              <span className="text-sm">{plant.status.temperature}°C</span>
+      </div>
+      
+      <CardContent className="p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <div className={`p-2 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
+              <Thermometer size={18} />
             </div>
-            <span className="text-xl">{getStatusEmoji(isTemperatureOk)}</span>
+            <div>
+              <p className="text-xs text-gray-500">Temperature</p>
+              <p className="font-medium">
+                {plant.status.temperature}°C
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col items-center p-2 rounded-lg bg-muted">
-            <div className="flex items-center mb-1">
-              <Sun size={16} className="mr-1" />
-              <span className="text-sm">{plant.status.light}%</span>
+          
+          <div className="flex items-center space-x-2">
+            <div className={`p-2 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
+              <Droplet size={18} />
             </div>
-            <span className="text-xl">{getStatusEmoji(isLightOk)}</span>
-          </div>
-          <div className="flex flex-col items-center p-2 rounded-lg bg-muted">
-            <div className="flex items-center mb-1">
-              <Droplet size={16} className="mr-1" />
-              <span className="text-sm">{plant.status.humidity}%</span>
+            <div>
+              <p className="text-xs text-gray-500">Humidity</p>
+              <p className="font-medium">
+                {plant.status.humidity}%
+              </p>
             </div>
-            <span className="text-xl">{getStatusEmoji(isHumidityOk)}</span>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-0">
-        <div className="text-xs text-muted-foreground">
-          {!isTemperatureOk || !isLightOk || !isHumidityOk 
-            ? "관리가 필요해요" 
-            : "모든 환경이 적합해요"}
-        </div>
-      </CardFooter>
     </Card>
   );
 }

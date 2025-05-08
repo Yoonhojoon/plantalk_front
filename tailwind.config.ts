@@ -63,12 +63,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				garden: {
-					'green': '#4CAF50',
-					'light-green': '#81C784',
-					'brown': '#795548',
-					'light-brown': '#D7CCC8',
-					'orange': '#FF9800'
+				plant: {
+					'green': '#69a564',
+					'light-green': '#d4e9d4',
+					'dark-green': '#447c40',
+					'accent': '#8bc34a'
 				}
 			},
 			borderRadius: {

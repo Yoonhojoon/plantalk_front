@@ -4,7 +4,7 @@ import { Plant, PlantEnvironment, PlantStatus } from "../models/PlantModel";
 
 interface PlantContextType {
   plants: Plant[];
-  addPlant: (name: string, type: string, image: string, environment: PlantEnvironment) => void;
+  addPlant: (name: string, species: string, location: string, image: string, environment: PlantEnvironment) => void;
   updatePlantStatus: (id: string, status: PlantStatus) => void;
   removePlant: (id: string) => void;
   getPlantsNeedingAttention: () => Plant[];
@@ -29,7 +29,7 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
 
   // Load plants from localStorage on mount
   useEffect(() => {
-    const savedPlants = localStorage.getItem('homegardener-plants');
+    const savedPlants = localStorage.getItem('plantapp-plants');
     if (savedPlants) {
       setPlants(JSON.parse(savedPlants));
     } else {
@@ -37,34 +37,36 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
       setPlants([
         {
           id: '1',
-          name: '아름다운 선인장',
-          type: '선인장',
-          image: '/plants/cactus.jpg',
+          name: 'Peace Lily',
+          species: 'Spathiphyllum',
+          location: 'Indoor',
+          image: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500',
           environment: {
-            temperature: { min: 18, max: 32 },
-            light: { min: 70, max: 100 },
-            humidity: { min: 20, max: 50 }
-          },
-          status: {
-            temperature: 25,
-            light: 85,
-            humidity: 35
-          }
-        },
-        {
-          id: '2',
-          name: '안개꽃',
-          type: '꽃',
-          image: '/plants/babys-breath.jpg',
-          environment: {
-            temperature: { min: 15, max: 26 },
-            light: { min: 40, max: 80 },
+            temperature: { min: 18, max: 26 },
+            light: { min: 40, max: 70 },
             humidity: { min: 40, max: 70 }
           },
           status: {
             temperature: 22,
             light: 60,
             humidity: 55
+          }
+        },
+        {
+          id: '2',
+          name: 'Snake Plant',
+          species: 'Sansevieria',
+          location: 'Indoor',
+          image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500',
+          environment: {
+            temperature: { min: 18, max: 32 },
+            light: { min: 30, max: 80 },
+            humidity: { min: 20, max: 60 }
+          },
+          status: {
+            temperature: 24,
+            light: 70,
+            humidity: 35
           }
         }
       ]);
@@ -74,15 +76,16 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
   // Save plants to localStorage whenever they change
   useEffect(() => {
     if (plants.length > 0) {
-      localStorage.setItem('homegardener-plants', JSON.stringify(plants));
+      localStorage.setItem('plantapp-plants', JSON.stringify(plants));
     }
   }, [plants]);
 
-  const addPlant = (name: string, type: string, image: string, environment: PlantEnvironment) => {
+  const addPlant = (name: string, species: string, location: string, image: string, environment: PlantEnvironment) => {
     const newPlant: Plant = {
       id: Date.now().toString(),
       name,
-      type,
+      species,
+      location,
       image,
       environment,
       status: {

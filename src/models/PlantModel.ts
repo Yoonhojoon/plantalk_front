@@ -19,7 +19,8 @@ export interface PlantStatus {
 export interface Plant {
   id: string;
   name: string;
-  type: string;
+  species: string;
+  location: string;
   image: string;
   environment: PlantEnvironment;
   status: PlantStatus;

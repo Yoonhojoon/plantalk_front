@@ -1,131 +1,65 @@
 
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { usePlantContext } from "@/contexts/PlantContext";
+import { useAuth } from "@/contexts/AuthContext";
 import PlantCard from "@/components/PlantCard";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import EnvironmentSlider from "@/components/EnvironmentSlider";
-import { Thermometer, Droplet, Sun } from "lucide-react";
-import { PlantStatus } from "@/models/PlantModel";
+import { Bell, Settings, Plus } from "lucide-react";
 
 export default function DashboardScreen() {
-  const { plants, updatePlantStatus } = usePlantContext();
-  const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null);
-
-  const selectedPlant = plants.find(p => p.id === selectedPlantId);
-
-  const handleStatusChange = (status: Partial<PlantStatus>) => {
-    if (selectedPlant) {
-      updatePlantStatus(selectedPlant.id, {
-        ...selectedPlant.status,
-        ...status
-      });
-    }
-  };
+  const { plants } = usePlantContext();
+  const { user } = useAuth();
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">내 식물 상태</h1>
+    <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Hello, {user?.fullName?.split(' ')[0] || 'there'}</h1>
+          <p className="text-sm text-muted-foreground">Welcome to your plant dashboard</p>
+        </div>
+        <div className="flex space-x-2">
+          <Link to="/notifications">
+            <Button variant="outline" size="icon" className="rounded-full">
+              <Bell size={20} />
+            </Button>
+          </Link>
+          <Link to="/settings">
+            <Button variant="outline" size="icon" className="rounded-full">
+              <Settings size={20} />
+            </Button>
+          </Link>
+        </div>
       </div>
 
+      <div className="bg-plant-light-green/25 rounded-2xl p-4 mb-6">
+        <h2 className="text-lg font-semibold text-plant-green">Plant Care Tips</h2>
+        <p className="text-sm mt-1">Remember to check humidity levels during summer months. Your plants may need more water!</p>
+      </div>
+
+      <h2 className="text-lg font-semibold mb-3">Your Plants</h2>
+
       {plants.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">등록된 식물이 없습니다.</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            첫 식물을 등록해보세요!
-          </p>
+        <div className="text-center py-12 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
+          <p className="text-muted-foreground">You haven't added any plants yet</p>
+          <Link to="/register-plant">
+            <Button className="mt-4 bg-plant-green hover:bg-plant-dark-green rounded-full">
+              Add Your First Plant
+            </Button>
+          </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4">
           {plants.map((plant) => (
-            <PlantCard
-              key={plant.id}
-              plant={plant}
-              onClick={() => setSelectedPlantId(plant.id)}
-            />
+            <PlantCard key={plant.id} plant={plant} />
           ))}
         </div>
       )}
 
-      <Dialog open={!!selectedPlantId} onOpenChange={(open) => !open && setSelectedPlantId(null)}>
-        {selectedPlant && (
-          <DialogContent className="max-w-md">
-            <div className="space-y-4">
-              <div className="relative h-48 -mt-4 -mx-6 overflow-hidden">
-                <img 
-                  src={selectedPlant.image} 
-                  alt={selectedPlant.name} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?q=80&w=500";
-                  }}
-                />
-              </div>
-              
-              <div>
-                <h2 className="text-xl font-bold">{selectedPlant.name}</h2>
-                <p className="text-muted-foreground text-sm">{selectedPlant.type}</p>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="font-medium">현재 환경 조건 조절</h3>
-                
-                <EnvironmentSlider
-                  label="온도 (°C)"
-                  value={selectedPlant.status.temperature}
-                  min={0}
-                  max={40}
-                  icon={<Thermometer size={16} />}
-                  onChange={(value) => handleStatusChange({ temperature: value })}
-                />
-                
-                <EnvironmentSlider
-                  label="조도 (%)"
-                  value={selectedPlant.status.light}
-                  min={0}
-                  max={100}
-                  step={5}
-                  icon={<Sun size={16} />}
-                  onChange={(value) => handleStatusChange({ light: value })}
-                />
-                
-                <EnvironmentSlider
-                  label="습도 (%)"
-                  value={selectedPlant.status.humidity}
-                  min={0}
-                  max={100}
-                  step={5}
-                  icon={<Droplet size={16} />}
-                  onChange={(value) => handleStatusChange({ humidity: value })}
-                />
-              </div>
-              
-              <div className="space-y-1">
-                <h3 className="font-medium">적정 환경 조건</h3>
-                <div className="text-sm grid grid-cols-3 gap-2">
-                  <div className="p-2 bg-muted rounded-md flex flex-col items-center">
-                    <Thermometer size={16} className="mb-1" />
-                    <span>{selectedPlant.environment.temperature.min}-{selectedPlant.environment.temperature.max}°C</span>
-                  </div>
-                  <div className="p-2 bg-muted rounded-md flex flex-col items-center">
-                    <Sun size={16} className="mb-1" />
-                    <span>{selectedPlant.environment.light.min}-{selectedPlant.environment.light.max}%</span>
-                  </div>
-                  <div className="p-2 bg-muted rounded-md flex flex-col items-center">
-                    <Droplet size={16} className="mb-1" />
-                    <span>{selectedPlant.environment.humidity.min}-{selectedPlant.environment.humidity.max}%</span>
-                  </div>
-                </div>
-              </div>
-              
-              <Button variant="outline" className="w-full" onClick={() => setSelectedPlantId(null)}>
-                닫기
-              </Button>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
+      <Link to="/register-plant" className="fixed bottom-20 right-4">
+        <Button size="icon" className="w-14 h-14 rounded-full bg-plant-green hover:bg-plant-dark-green shadow-lg">
+          <Plus size={24} />
+        </Button>
+      </Link>
     </div>
   );
 }
