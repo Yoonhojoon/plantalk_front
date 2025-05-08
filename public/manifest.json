@@ -2,7 +2,7 @@
   "name": "MoodGreen",
   "short_name": "MoodGreen",
   "description": "MoodGreen - 당신의 감정을 기록하세요",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
