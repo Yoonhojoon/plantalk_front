@@ -40,6 +40,7 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
           name: 'Peace Lily',
           species: 'Spathiphyllum',
           location: 'Indoor',
+          type: 'Flowering plant', // Added type field
           image: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500',
           environment: {
             temperature: { min: 18, max: 26 },
@@ -57,6 +58,7 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
           name: 'Snake Plant',
           species: 'Sansevieria',
           location: 'Indoor',
+          type: 'Succulent', // Added type field
           image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500',
           environment: {
             temperature: { min: 18, max: 32 },
@@ -86,6 +88,7 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
       name,
       species,
       location,
+      type: species, // Using species as the type for now
       image,
       environment,
       status: {

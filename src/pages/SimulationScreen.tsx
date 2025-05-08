@@ -1,3 +1,4 @@
+
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Thermometer, Droplet, Sun } from "lucide-react";
@@ -63,7 +64,7 @@ export default function SimulationScreen() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{plant.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{plant.type}</p>
+                      <p className="text-sm text-muted-foreground">{plant.species}</p>
                     </div>
                   </div>
                   <div className="flex space-x-3">

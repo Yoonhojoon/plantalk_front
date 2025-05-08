@@ -20,6 +20,7 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
   
   const [name, setName] = useState("");
   const [type, setType] = useState("");
+  const [location, setLocation] = useState("Indoor"); // Added location state
   const [image, setImage] = useState("");
   const [environment, setEnvironment] = useState<PlantEnvironment>({
     temperature: { min: 18, max: 28 },
@@ -42,7 +43,7 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !type || !image) {
+    if (!name || !type || !image || !location) {
       toast({
         title: "입력 오류",
         description: "모든 필드를 입력해주세요.",
@@ -51,7 +52,8 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
       return;
     }
     
-    addPlant(name, type, image, environment);
+    // Updated to pass all 5 required arguments
+    addPlant(name, type, location, image, environment);
     
     toast({
       title: "식물 등록 완료",
@@ -61,6 +63,7 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
     // Reset form
     setName("");
     setType("");
+    setLocation("Indoor");
     setImage("");
     setEnvironment({
       temperature: { min: 18, max: 28 },
@@ -98,6 +101,19 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
               onChange={(e) => setType(e.target.value)} 
               placeholder="식물 종류를 입력하세요"
             />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="location">위치</Label>
+            <select
+              id="location"
+              className="w-full border border-input bg-background px-3 py-2 rounded-md"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="Indoor">실내</option>
+              <option value="Outdoor">실외</option>
+            </select>
           </div>
           
           <div className="space-y-2">
