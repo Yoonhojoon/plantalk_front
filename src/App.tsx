@@ -29,7 +29,7 @@ const App = () => (
         <PlantProvider>
           <TooltipProvider>
             <Toaster />
-            <Sonner />
+            <Sonner position="top-center" />
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginScreen />} />
