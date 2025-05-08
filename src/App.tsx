@@ -13,8 +13,6 @@ import DashboardScreen from "./pages/DashboardScreen";
 import RegisterPlantScreen from "./pages/RegisterPlantScreen";
 import NotificationsScreen from "./pages/NotificationsScreen";
 import SettingsScreen from "./pages/SettingsScreen";
-import CartScreen from "./pages/CartScreen";
-import SearchScreen from "./pages/SearchScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -41,8 +39,6 @@ const App = () => (
                   <Route path="/register-plant" element={<RegisterPlantScreen />} />
                   <Route path="/notifications" element={<NotificationsScreen />} />
                   <Route path="/settings" element={<SettingsScreen />} />
-                  <Route path="/cart" element={<CartScreen />} />
-                  <Route path="/search" element={<SearchScreen />} />
                   <Route path="/profile" element={<ProfileScreen />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

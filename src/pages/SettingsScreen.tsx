@@ -14,7 +14,7 @@ export default function SettingsScreen() {
   
   const handleLogout = () => {
     logout();
-    toast.success("Logged out successfully");
+    toast.success("로그아웃되었습니다");
     navigate("/login");
   };
   
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-xl font-bold">Settings</h1>
+        <h1 className="text-xl font-bold">설정</h1>
       </div>
       
       <div className="space-y-6">
@@ -40,7 +40,7 @@ export default function SettingsScreen() {
             </div>
             <div>
               <h2 className="font-semibold text-lg">{user?.fullName}</h2>
-              <p className="text-sm text-muted-foreground">{user?.email || 'No email provided'}</p>
+              <p className="text-sm text-muted-foreground">{user?.email || '이메일 없음'}</p>
             </div>
           </div>
         </div>
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center">
               {isDarkMode ? <Moon size={18} className="mr-3" /> : <Sun size={18} className="mr-3" />}
-              <span>Dark Mode</span>
+              <span>다크 모드</span>
             </div>
             <Switch 
               checked={isDarkMode}
@@ -58,7 +58,7 @@ export default function SettingsScreen() {
           </div>
           
           <div className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">App Version</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">앱 버전</h3>
             <p className="text-sm">1.0.0</p>
           </div>
           
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
               onClick={handleLogout}
             >
               <LogOut size={16} />
-              <span>Log Out</span>
+              <span>로그아웃</span>
             </Button>
           </div>
         </div>

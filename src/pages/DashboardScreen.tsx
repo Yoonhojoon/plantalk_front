@@ -4,7 +4,7 @@ import { usePlantContext } from "@/contexts/PlantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import PlantCard from "@/components/PlantCard";
 import { Button } from "@/components/ui/button";
-import { Bell, Settings, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export default function DashboardScreen() {
   const { plants } = usePlantContext();
@@ -12,38 +12,24 @@ export default function DashboardScreen() {
 
   return (
     <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Hello, {user?.fullName?.split(' ')[0] || 'there'}</h1>
-          <p className="text-sm text-muted-foreground">Welcome to your plant dashboard</p>
-        </div>
-        <div className="flex space-x-2">
-          <Link to="/notifications">
-            <Button variant="outline" size="icon" className="rounded-full">
-              <Bell size={20} />
-            </Button>
-          </Link>
-          <Link to="/settings">
-            <Button variant="outline" size="icon" className="rounded-full">
-              <Settings size={20} />
-            </Button>
-          </Link>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">안녕하세요, {user?.fullName?.split(' ')[0] || '사용자'}님</h1>
+        <p className="text-sm text-muted-foreground">식물 대시보드에 오신 것을 환영합니다</p>
       </div>
 
       <div className="bg-plant-light-green/25 rounded-2xl p-4 mb-6">
-        <h2 className="text-lg font-semibold text-plant-green">Plant Care Tips</h2>
-        <p className="text-sm mt-1">Remember to check humidity levels during summer months. Your plants may need more water!</p>
+        <h2 className="text-lg font-semibold text-plant-green">식물 관리 팁</h2>
+        <p className="text-sm mt-1">여름철에는 습도 수준을 확인하세요. 식물에 더 많은 물이 필요할 수 있습니다!</p>
       </div>
 
-      <h2 className="text-lg font-semibold mb-3">Your Plants</h2>
+      <h2 className="text-lg font-semibold mb-3">내 식물</h2>
 
       {plants.length === 0 ? (
         <div className="text-center py-12 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
-          <p className="text-muted-foreground">You haven't added any plants yet</p>
+          <p className="text-muted-foreground">아직 등록된 식물이 없습니다</p>
           <Link to="/register-plant">
             <Button className="mt-4 bg-plant-green hover:bg-plant-dark-green rounded-full">
-              Add Your First Plant
+              첫 번째 식물 추가하기
             </Button>
           </Link>
         </div>

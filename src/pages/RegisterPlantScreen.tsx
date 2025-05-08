@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Image, Thermometer, Droplet } from "lucide-react";
+import { ArrowLeft, Camera, Image, Thermometer, Droplet, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RegisterPlantScreen() {
@@ -21,6 +21,7 @@ export default function RegisterPlantScreen() {
   const [image, setImage] = useState("");
   const [temperature, setTemperature] = useState({ min: 18, max: 26 });
   const [humidity, setHumidity] = useState({ min: 40, max: 70 });
+  const [light, setLight] = useState({ min: 30, max: 70 });
   
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
@@ -32,24 +33,24 @@ export default function RegisterPlantScreen() {
       "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=500"
     ];
     setImage(placeholderImages[Math.floor(Math.random() * placeholderImages.length)]);
-    toast.success("Image selected!");
+    toast.success("이미지가 선택되었습니다!");
   };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name || !species || !image) {
-      toast.error("Please fill all required fields and select an image");
+      toast.error("모든 필수 항목을 입력하고 이미지를 선택해주세요");
       return;
     }
     
     addPlant(name, species, location, image, {
       temperature,
-      light: { min: 40, max: 80 }, // Default light values
+      light, 
       humidity
     });
     
-    toast.success("Plant added successfully!");
+    toast.success("식물이 추가되었습니다!");
     navigate("/dashboard");
   };
   
@@ -64,15 +65,15 @@ export default function RegisterPlantScreen() {
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-xl font-bold">Register New Plant</h1>
+        <h1 className="text-xl font-bold">새 식물 등록</h1>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
-          <Label htmlFor="name">Plant Name</Label>
+          <Label htmlFor="name">식물 이름</Label>
           <Input
             id="name"
-            placeholder="E.g., Peace Lily"
+            placeholder="예: 피스 릴리"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="plant-form-input"
@@ -80,10 +81,10 @@ export default function RegisterPlantScreen() {
         </div>
         
         <div className="space-y-4">
-          <Label htmlFor="species">Plant Species</Label>
+          <Label htmlFor="species">식물 품종</Label>
           <Input
             id="species"
-            placeholder="E.g., Spathiphyllum"
+            placeholder="예: 스파티필럼"
             value={species}
             onChange={(e) => setSpecies(e.target.value)}
             className="plant-form-input"
@@ -91,29 +92,29 @@ export default function RegisterPlantScreen() {
         </div>
         
         <div className="space-y-4">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location">위치</Label>
           <Select
             value={location}
             onValueChange={setLocation}
           >
             <SelectTrigger className="plant-form-input">
-              <SelectValue placeholder="Select location" />
+              <SelectValue placeholder="위치 선택" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Indoor">Indoor</SelectItem>
-              <SelectItem value="Outdoor">Outdoor</SelectItem>
-              <SelectItem value="Balcony">Balcony</SelectItem>
+              <SelectItem value="Indoor">실내</SelectItem>
+              <SelectItem value="Outdoor">실외</SelectItem>
+              <SelectItem value="Balcony">발코니</SelectItem>
             </SelectContent>
           </Select>
         </div>
         
         <div className="space-y-4">
-          <Label>Plant Image</Label>
+          <Label>식물 이미지</Label>
           {image ? (
             <div className="relative overflow-hidden rounded-xl h-64">
               <img 
                 src={image} 
-                alt="Selected plant" 
+                alt="선택된 식물" 
                 className="w-full h-full object-cover"
               />
               <Button
@@ -121,7 +122,7 @@ export default function RegisterPlantScreen() {
                 className="absolute bottom-3 right-3 rounded-full bg-white text-plant-green hover:bg-white/90"
                 onClick={handleImageSelect}
               >
-                Change Image
+                이미지 변경
               </Button>
             </div>
           ) : (
@@ -133,7 +134,7 @@ export default function RegisterPlantScreen() {
                 onClick={handleImageSelect}
               >
                 <Camera size={24} />
-                <span className="text-xs">Take Photo</span>
+                <span className="text-xs">사진 촬영</span>
               </Button>
               <Button
                 type="button"
@@ -142,7 +143,7 @@ export default function RegisterPlantScreen() {
                 onClick={handleImageSelect}
               >
                 <Image size={24} />
-                <span className="text-xs">Choose from Gallery</span>
+                <span className="text-xs">갤러리에서 선택</span>
               </Button>
             </div>
           )}
@@ -154,7 +155,7 @@ export default function RegisterPlantScreen() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Thermometer size={18} className="text-red-500" />
-                  <Label>Temperature (°C)</Label>
+                  <Label>온도 (°C)</Label>
                 </div>
                 <div className="text-sm font-medium">
                   {temperature.min}°C - {temperature.max}°C
@@ -163,7 +164,7 @@ export default function RegisterPlantScreen() {
               
               <div className="space-y-6">
                 <div>
-                  <Label className="text-xs mb-2 block">Minimum</Label>
+                  <Label className="text-xs mb-2 block">최소</Label>
                   <Slider
                     value={[temperature.min]}
                     min={0}
@@ -175,7 +176,7 @@ export default function RegisterPlantScreen() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">Maximum</Label>
+                  <Label className="text-xs mb-2 block">최대</Label>
                   <Slider
                     value={[temperature.max]}
                     min={0}
@@ -193,7 +194,7 @@ export default function RegisterPlantScreen() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Droplet size={18} className="text-blue-500" />
-                  <Label>Humidity (%)</Label>
+                  <Label>습도 (%)</Label>
                 </div>
                 <div className="text-sm font-medium">
                   {humidity.min}% - {humidity.max}%
@@ -202,7 +203,7 @@ export default function RegisterPlantScreen() {
               
               <div className="space-y-6">
                 <div>
-                  <Label className="text-xs mb-2 block">Minimum</Label>
+                  <Label className="text-xs mb-2 block">최소</Label>
                   <Slider
                     value={[humidity.min]}
                     min={0}
@@ -214,7 +215,7 @@ export default function RegisterPlantScreen() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs mb-2 block">Maximum</Label>
+                  <Label className="text-xs mb-2 block">최대</Label>
                   <Slider
                     value={[humidity.max]}
                     min={0}
@@ -227,6 +228,45 @@ export default function RegisterPlantScreen() {
                 </div>
               </div>
             </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sun size={18} className="text-yellow-500" />
+                  <Label>광량 (%)</Label>
+                </div>
+                <div className="text-sm font-medium">
+                  {light.min}% - {light.max}%
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-xs mb-2 block">최소</Label>
+                  <Slider
+                    value={[light.min]}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onValueChange={(values) => 
+                      setLight({ ...light, min: values[0] })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-2 block">최대</Label>
+                  <Slider
+                    value={[light.max]}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onValueChange={(values) => 
+                      setLight({ ...light, max: values[0] })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
         
@@ -234,7 +274,7 @@ export default function RegisterPlantScreen() {
           type="submit" 
           className="w-full bg-plant-green hover:bg-plant-dark-green text-white rounded-full h-12"
         >
-          Add Plant
+          식물 추가
         </Button>
       </form>
     </div>

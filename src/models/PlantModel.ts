@@ -21,7 +21,7 @@ export interface Plant {
   name: string;
   species: string;
   location: string;
-  type: string; // Added the missing 'type' field
+  type: string;
   image: string;
   environment: PlantEnvironment;
   status: PlantStatus;

@@ -14,7 +14,7 @@ export default function NotificationsScreen() {
     id: `water-${plant.id}`,
     plant,
     type: 'watering',
-    message: `Time to water your ${plant.name}`,
+    message: `${plant.name} 물주기 시간`,
     timestamp: new Date(Date.now() - Math.floor(Math.random() * 86400000)).toISOString(),
     icon: <Droplet size={18} className="text-blue-500" />
   }));
@@ -30,8 +30,8 @@ export default function NotificationsScreen() {
         id: `temp-low-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} is too cold`,
-        details: `Current: ${temperature}°C, Min: ${env.temperature.min}°C`,
+        message: `${plant.name} 온도가 너무 낮습니다`,
+        details: `현재: ${temperature}°C, 최소: ${env.temperature.min}°C`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 10800000)).toISOString(),
         icon: <Thermometer size={18} className="text-blue-500" />
       });
@@ -40,8 +40,8 @@ export default function NotificationsScreen() {
         id: `temp-high-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} is too hot`,
-        details: `Current: ${temperature}°C, Max: ${env.temperature.max}°C`,
+        message: `${plant.name} 온도가 너무 높습니다`,
+        details: `현재: ${temperature}°C, 최대: ${env.temperature.max}°C`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 10800000)).toISOString(),
         icon: <Thermometer size={18} className="text-red-500" />
       });
@@ -52,8 +52,8 @@ export default function NotificationsScreen() {
         id: `humid-low-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} needs more humidity`,
-        details: `Current: ${humidity}%, Min: ${env.humidity.min}%`,
+        message: `${plant.name} 습도가 부족합니다`,
+        details: `현재: ${humidity}%, 최소: ${env.humidity.min}%`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 21600000)).toISOString(),
         icon: <Droplet size={18} className="text-blue-500" />
       });
@@ -62,8 +62,8 @@ export default function NotificationsScreen() {
         id: `humid-high-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} has excess humidity`,
-        details: `Current: ${humidity}%, Max: ${env.humidity.max}%`,
+        message: `${plant.name} 습도가 너무 높습니다`,
+        details: `현재: ${humidity}%, 최대: ${env.humidity.max}%`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 21600000)).toISOString(),
         icon: <Droplet size={18} className="text-blue-500" />
       });
@@ -74,8 +74,8 @@ export default function NotificationsScreen() {
         id: `light-low-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} needs more light`,
-        details: `Current: ${light}%, Min: ${env.light.min}%`,
+        message: `${plant.name} 더 많은 빛이 필요합니다`,
+        details: `현재: ${light}%, 최소: ${env.light.min}%`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 36000000)).toISOString(),
         icon: <Sun size={18} className="text-yellow-500" />
       });
@@ -84,8 +84,8 @@ export default function NotificationsScreen() {
         id: `light-high-${plant.id}`,
         plant,
         type: 'issue',
-        message: `${plant.name} has too much light`,
-        details: `Current: ${light}%, Max: ${env.light.max}%`,
+        message: `${plant.name} 빛이 너무 많습니다`,
+        details: `현재: ${light}%, 최대: ${env.light.max}%`,
         timestamp: new Date(Date.now() - Math.floor(Math.random() * 36000000)).toISOString(),
         icon: <Sun size={18} className="text-yellow-500" />
       });
@@ -108,12 +108,12 @@ export default function NotificationsScreen() {
     
     if (diffHrs < 1) {
       const diffMins = Math.floor(diffMs / (1000 * 60));
-      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+      return `${diffMins}분 전`;
     } else if (diffHrs < 24) {
-      return `${diffHrs} hour${diffHrs !== 1 ? 's' : ''} ago`;
+      return `${diffHrs}시간 전`;
     } else {
       const diffDays = Math.floor(diffHrs / 24);
-      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+      return `${diffDays}일 전`;
     }
   };
   
@@ -128,13 +128,13 @@ export default function NotificationsScreen() {
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="text-xl font-bold">Notifications</h1>
+        <h1 className="text-xl font-bold">알림</h1>
       </div>
       
       {allNotifications.length === 0 ? (
         <div className="text-center py-12 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
-          <p className="text-muted-foreground">No notifications at this time</p>
-          <p className="text-xs text-muted-foreground mt-2">All your plants are doing great!</p>
+          <p className="text-muted-foreground">현재 알림이 없습니다</p>
+          <p className="text-xs text-muted-foreground mt-2">모든 식물이 건강합니다!</p>
         </div>
       ) : (
         <div className="space-y-4">

@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, ShoppingCart, User } from "lucide-react";
+import { Home, Bell, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNavigation() {
@@ -10,23 +10,23 @@ export default function BottomNavigation() {
   const navItems = [
     {
       icon: <Home size={20} />,
-      label: "Home",
+      label: "홈",
       path: "/dashboard",
     },
     {
-      icon: <Search size={20} />,
-      label: "Search",
-      path: "/search",
-    },
-    {
-      icon: <ShoppingCart size={20} />,
-      label: "Cart",
-      path: "/cart",
+      icon: <Bell size={20} />,
+      label: "알림",
+      path: "/notifications",
     },
     {
       icon: <User size={20} />,
-      label: "Profile",
+      label: "프로필",
       path: "/profile",
+    },
+    {
+      icon: <Settings size={20} />,
+      label: "설정",
+      path: "/settings",
     },
   ];
 
