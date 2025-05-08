@@ -5,11 +5,11 @@ import { usePlantContext } from "@/contexts/PlantContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Camera, Image, Thermometer, Droplet, Sun } from "lucide-react";
+import { ArrowLeft, Camera, Image, Thermometer, Droplet, Sun, Clock } from "lucide-react";
 import { toast } from "sonner";
+import DualRangeSlider from "@/components/DualRangeSlider";
 
 export default function RegisterPlantScreen() {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ export default function RegisterPlantScreen() {
   const [temperature, setTemperature] = useState({ min: 18, max: 26 });
   const [humidity, setHumidity] = useState({ min: 40, max: 70 });
   const [light, setLight] = useState({ min: 30, max: 70 });
+  const [wateringInterval, setWateringInterval] = useState(7); // Default: 7 days
   
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
@@ -44,11 +45,14 @@ export default function RegisterPlantScreen() {
       return;
     }
     
+    // Create current date for lastWatered
+    const currentDate = new Date().toISOString();
+    
     addPlant(name, species, location, image, {
       temperature,
       light, 
       humidity
-    });
+    }, wateringInterval, currentDate);
     
     toast.success("식물이 추가되었습니다!");
     navigate("/dashboard");
@@ -109,6 +113,22 @@ export default function RegisterPlantScreen() {
         </div>
         
         <div className="space-y-4">
+          <Label htmlFor="wateringInterval" className="flex items-center gap-2">
+            <Clock size={18} className="text-plant-green" />
+            물주기 간격 (일)
+          </Label>
+          <Input
+            id="wateringInterval"
+            type="number"
+            min="1"
+            max="60"
+            value={wateringInterval}
+            onChange={(e) => setWateringInterval(Number(e.target.value))}
+            className="plant-form-input"
+          />
+        </div>
+        
+        <div className="space-y-4">
           <Label>식물 이미지</Label>
           {image ? (
             <div className="relative overflow-hidden rounded-xl h-64">
@@ -151,122 +171,41 @@ export default function RegisterPlantScreen() {
         
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6 space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Thermometer size={18} className="text-red-500" />
-                  <Label>온도 (°C)</Label>
-                </div>
-                <div className="text-sm font-medium">
-                  {temperature.min}°C - {temperature.max}°C
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-xs mb-2 block">최소</Label>
-                  <Slider
-                    value={[temperature.min]}
-                    min={0}
-                    max={40}
-                    step={1}
-                    onValueChange={(values) => 
-                      setTemperature({ ...temperature, min: values[0] })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs mb-2 block">최대</Label>
-                  <Slider
-                    value={[temperature.max]}
-                    min={0}
-                    max={40}
-                    step={1}
-                    onValueChange={(values) => 
-                      setTemperature({ ...temperature, max: values[0] })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <DualRangeSlider
+              label="온도 (°C)"
+              minValue={temperature.min}
+              maxValue={temperature.max}
+              minLimit={0}
+              maxLimit={40}
+              step={1}
+              unit="°C"
+              icon={<Thermometer size={18} className="text-red-500" />}
+              onChange={(min, max) => setTemperature({ min, max })}
+            />
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Droplet size={18} className="text-blue-500" />
-                  <Label>습도 (%)</Label>
-                </div>
-                <div className="text-sm font-medium">
-                  {humidity.min}% - {humidity.max}%
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-xs mb-2 block">최소</Label>
-                  <Slider
-                    value={[humidity.min]}
-                    min={0}
-                    max={100}
-                    step={5}
-                    onValueChange={(values) => 
-                      setHumidity({ ...humidity, min: values[0] })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs mb-2 block">최대</Label>
-                  <Slider
-                    value={[humidity.max]}
-                    min={0}
-                    max={100}
-                    step={5}
-                    onValueChange={(values) => 
-                      setHumidity({ ...humidity, max: values[0] })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <DualRangeSlider
+              label="습도 (%)"
+              minValue={humidity.min}
+              maxValue={humidity.max}
+              minLimit={0}
+              maxLimit={100}
+              step={5}
+              unit="%"
+              icon={<Droplet size={18} className="text-blue-500" />}
+              onChange={(min, max) => setHumidity({ min, max })}
+            />
             
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sun size={18} className="text-yellow-500" />
-                  <Label>광량 (%)</Label>
-                </div>
-                <div className="text-sm font-medium">
-                  {light.min}% - {light.max}%
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-xs mb-2 block">최소</Label>
-                  <Slider
-                    value={[light.min]}
-                    min={0}
-                    max={100}
-                    step={5}
-                    onValueChange={(values) => 
-                      setLight({ ...light, min: values[0] })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs mb-2 block">최대</Label>
-                  <Slider
-                    value={[light.max]}
-                    min={0}
-                    max={100}
-                    step={5}
-                    onValueChange={(values) => 
-                      setLight({ ...light, max: values[0] })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
+            <DualRangeSlider
+              label="광량 (%)"
+              minValue={light.min}
+              maxValue={light.max}
+              minLimit={0}
+              maxLimit={100}
+              step={5}
+              unit="%"
+              icon={<Sun size={18} className="text-yellow-500" />}
+              onChange={(min, max) => setLight({ min, max })}
+            />
           </CardContent>
         </Card>
         

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, MapPin, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlantContext } from "@/contexts/PlantContext";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { plants } = usePlantContext();
   
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -122,16 +124,8 @@ export default function ProfileScreen() {
           </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm">등록된 식물</span>
-              <span className="font-medium">2</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">구매 내역</span>
-              <span className="font-medium">5</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">리뷰</span>
-              <span className="font-medium">3</span>
+              <span className="text-sm">내 식물 수</span>
+              <span className="font-medium">{plants.length}</span>
             </div>
           </div>
         </div>

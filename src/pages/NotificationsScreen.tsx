@@ -1,13 +1,34 @@
 
+import { useState } from "react";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Thermometer, Droplet, Sun, Clock } from "lucide-react";
+import { ArrowLeft, Thermometer, Droplet, Sun, Clock, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+interface Notification {
+  id: string;
+  plant: any;
+  type: string;
+  message: string;
+  details?: string;
+  timestamp: string;
+  icon: JSX.Element;
+  completed?: boolean;
+}
 
 export default function NotificationsScreen() {
   const navigate = useNavigate();
   const { plants, getPlantsNeedingAttention } = usePlantContext();
   const plantsNeedingAttention = getPlantsNeedingAttention();
+  
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+
+  // Mark a notification as completed
+  const handleComplete = (id: string) => {
+    setCompletedIds(prev => [...prev, id]);
+    toast.success("알림이 완료되었습니다");
+  };
   
   // Create some watering reminders for the plants
   const wateringReminders = plants.map((plant) => ({
@@ -95,9 +116,8 @@ export default function NotificationsScreen() {
   });
   
   // Combine all notifications
-  const allNotifications = [...wateringReminders, ...issueNotifications].sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  const allNotifications = [...wateringReminders, ...issueNotifications]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) as Notification[];
   
   // Format timestamp to display as "x hours ago"
   const formatTime = (timestamp: string) => {
@@ -138,29 +158,50 @@ export default function NotificationsScreen() {
         </div>
       ) : (
         <div className="space-y-4">
-          {allNotifications.map((notification) => (
-            <div 
-              key={notification.id}
-              className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex"
-            >
-              <div className="mr-3 mt-1">
-                {notification.icon}
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-medium">{notification.message}</h3>
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <Clock size={12} className="inline mr-1" /> 
-                    {formatTime(notification.timestamp)}
+          {allNotifications.map((notification) => {
+            const isCompleted = completedIds.includes(notification.id);
+            
+            return (
+              <div 
+                key={notification.id}
+                className={`bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex ${isCompleted ? 'opacity-60' : ''}`}
+              >
+                <div className="mr-3 mt-1">
+                  {notification.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <h3 className={`font-medium ${isCompleted ? 'line-through text-gray-400' : ''}`}>
+                      {notification.message}
+                      {isCompleted && <Check size={14} className="inline ml-1 text-green-500" />}
+                    </h3>
+                    <div className="text-xs text-gray-500 flex items-center">
+                      <Clock size={12} className="inline mr-1" /> 
+                      {formatTime(notification.timestamp)}
+                    </div>
+                  </div>
+                  {notification.details && (
+                    <p className={`text-sm ${isCompleted ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {notification.details}
+                    </p>
+                  )}
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-gray-400">{notification.plant.name}</p>
+                    {!isCompleted && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 px-2 text-green-600 border-green-200 hover:bg-green-50"
+                        onClick={() => handleComplete(notification.id)}
+                      >
+                        완료
+                      </Button>
+                    )}
                   </div>
                 </div>
-                {notification.details && (
-                  <p className="text-sm text-gray-500">{notification.details}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-1">{notification.plant.name}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

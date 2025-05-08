@@ -25,4 +25,6 @@ export interface Plant {
   image: string;
   environment: PlantEnvironment;
   status: PlantStatus;
+  wateringInterval: number;
+  lastWatered?: string; // ISO date string of last watering
 }

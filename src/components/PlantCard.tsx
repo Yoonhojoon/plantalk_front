@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Plant } from "../models/PlantModel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Thermometer, Droplet } from "lucide-react";
+import { Trash2, Thermometer, Droplet, Sun, Droplets } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -23,14 +23,38 @@ interface PlantCardProps {
 }
 
 export default function PlantCard({ plant }: PlantCardProps) {
-  const { removePlant } = usePlantContext();
+  const { removePlant, updatePlantWatering } = usePlantContext();
   const [open, setOpen] = useState(false);
   
   const handleDelete = () => {
     removePlant(plant.id);
-    toast.success("Plant removed successfully");
+    toast.success("식물이 삭제되었습니다");
     setOpen(false);
   };
+
+  const handleWater = () => {
+    const currentDate = new Date().toISOString();
+    updatePlantWatering(plant.id, currentDate);
+    toast.success(`${plant.name}에 물을 주었습니다!`);
+  };
+  
+  // Calculate days until next watering
+  const getDaysUntilNextWatering = (): number => {
+    const lastWatered = plant.lastWatered 
+      ? new Date(plant.lastWatered) 
+      : new Date(); // Default to today if not set
+    
+    const nextWatering = new Date(lastWatered);
+    nextWatering.setDate(nextWatering.getDate() + plant.wateringInterval);
+    
+    const today = new Date();
+    const diffTime = nextWatering.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
+  
+  const daysUntilWatering = getDaysUntilNextWatering();
   
   const isTemperatureOk = 
     plant.status.temperature >= plant.environment.temperature.min &&
@@ -39,6 +63,10 @@ export default function PlantCard({ plant }: PlantCardProps) {
   const isHumidityOk = 
     plant.status.humidity >= plant.environment.humidity.min &&
     plant.status.humidity <= plant.environment.humidity.max;
+    
+  const isLightOk = 
+    plant.status.light >= plant.environment.light.min &&
+    plant.status.light <= plant.environment.light.max;
 
   return (
     <Card className="plant-card border-0 relative">
@@ -54,18 +82,18 @@ export default function PlantCard({ plant }: PlantCardProps) {
         </AlertDialogTrigger>
         <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {plant.name} from your plant collection.
+              {plant.name}을(를) 식물 컬렉션에서 영구적으로 삭제합니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-full">취소</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600 rounded-full"
             >
-              Delete
+              삭제
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -96,26 +124,33 @@ export default function PlantCard({ plant }: PlantCardProps) {
       <CardContent className="p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className={`p-2 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
-              <Thermometer size={18} />
+            <div className={`p-1 rounded-lg ${daysUntilWatering <= 1 ? 'bg-red-100 text-red-500' : daysUntilWatering <= 3 ? 'bg-yellow-100 text-yellow-500' : 'bg-green-100 text-green-600'}`}>
+              <div className="bg-white rounded-md px-2 py-1 text-sm font-bold border">
+                D-{daysUntilWatering}
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Temperature</p>
-              <p className="font-medium">
-                {plant.status.temperature}°C
-              </p>
-            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center text-blue-500 border-blue-200 hover:bg-blue-50"
+              onClick={handleWater}
+            >
+              <Droplets className="mr-1" size={16} />
+              <span className="text-xs">물주기</span>
+            </Button>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <div className={`p-2 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
-              <Droplet size={18} />
+          <div className="flex items-center space-x-3">
+            <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
+              <Thermometer size={16} />
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Humidity</p>
-              <p className="font-medium">
-                {plant.status.humidity}%
-              </p>
+            
+            <div className={`p-1.5 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
+              <Droplet size={16} />
+            </div>
+            
+            <div className={`p-1.5 rounded-lg ${isLightOk ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-500'}`}>
+              <Sun size={16} />
             </div>
           </div>
         </div>

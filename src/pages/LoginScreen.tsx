@@ -18,7 +18,7 @@ export default function LoginScreen() {
     e.preventDefault();
     
     if (!fullName || !password) {
-      toast.error("Please enter both fullname and password");
+      toast.error("이름과 비밀번호를 모두 입력해주세요");
       return;
     }
     
@@ -27,13 +27,13 @@ export default function LoginScreen() {
     try {
       const success = await login(fullName, password);
       if (success) {
-        toast.success("Login successful!");
+        toast.success("로그인 성공!");
         navigate('/dashboard');
       } else {
-        toast.error("Login failed. Please try again.");
+        toast.error("로그인 실패. 다시 시도해주세요.");
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      toast.error("오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +50,7 @@ export default function LoginScreen() {
           <div className="space-y-2">
             <Input
               type="text"
-              placeholder="Full Name"
+              placeholder="이름"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="plant-form-input h-12"
@@ -60,7 +60,7 @@ export default function LoginScreen() {
           <div className="space-y-2">
             <Input
               type="password"
-              placeholder="Password"
+              placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="plant-form-input h-12"
@@ -72,15 +72,15 @@ export default function LoginScreen() {
             className="w-full bg-plant-green hover:bg-plant-dark-green text-white h-12 rounded-full font-medium"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "로그인 중..." : "로그인"}
           </Button>
         </form>
         
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
+            계정이 없으신가요?{" "}
             <Link to="/signup" className="text-plant-green hover:underline font-medium">
-              Sign Up
+              회원가입
             </Link>
           </p>
         </div>
