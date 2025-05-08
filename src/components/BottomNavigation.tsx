@@ -38,7 +38,7 @@ export default function BottomNavigation() {
           to={item.path}
           className={cn(
             "flex flex-col items-center justify-center w-full py-1 space-y-1",
-            currentPath === item.path
+            currentPath === item.path || (currentPath.includes(item.path) && item.path !== "/")
               ? "text-plant-green"
               : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           )}

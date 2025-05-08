@@ -27,4 +27,5 @@ export interface Plant {
   status: PlantStatus;
   wateringInterval: number;
   lastWatered?: string; // ISO date string of last watering
+  emotionalState?: string; // For plant character mood on detail page
 }
