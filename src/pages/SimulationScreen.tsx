@@ -124,31 +124,43 @@ export default function SimulationScreen() {
                         
                         <EnvironmentSlider
                           label="온도 (°C)"
-                          value={plant.status.temperature}
+                          minValue={plant.status.temperature}
+                          maxValue={plant.environment.temperature.max}
                           min={0}
                           max={40}
                           icon={<Thermometer size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { temperature: value })}
+                          onMinChange={(value) => handleStatusChange(plant.id, { temperature: value })}
+                          onMaxChange={(value) => handleStatusChange(plant.id, { 
+                            temperature: plant.status.temperature
+                          })}
                         />
                         
                         <EnvironmentSlider
                           label="조도 (%)"
-                          value={plant.status.light}
+                          minValue={plant.status.light}
+                          maxValue={plant.environment.light.max}
                           min={0}
                           max={100}
                           step={5}
                           icon={<Sun size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { light: value })}
+                          onMinChange={(value) => handleStatusChange(plant.id, { light: value })}
+                          onMaxChange={(value) => handleStatusChange(plant.id, { 
+                            light: plant.status.light
+                          })}
                         />
                         
                         <EnvironmentSlider
                           label="습도 (%)"
-                          value={plant.status.humidity}
+                          minValue={plant.status.humidity}
+                          maxValue={plant.environment.humidity.max}
                           min={0}
                           max={100}
                           step={5}
                           icon={<Droplet size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { humidity: value })}
+                          onMinChange={(value) => handleStatusChange(plant.id, { humidity: value })}
+                          onMaxChange={(value) => handleStatusChange(plant.id, { 
+                            humidity: plant.status.humidity
+                          })}
                         />
                       </div>
                     </div>
