@@ -1,19 +1,60 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlantContext } from "@/contexts/PlantContext";
 import PlantCharacter from "@/components/PlantCharacter";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function DashboardScreen() {
   const { user } = useAuth();
   const { plants, representativePlantId } = usePlantContext();
+  const [plantStatus, setPlantStatus] = useState<any>(null);
 
   // 대표 식물 정보 가져오기
   const representativePlant = plants.find(p => p.id === representativePlantId);
 
+  // 식물 상태 정보 가져오기
+  useEffect(() => {
+    const fetchPlantStatus = async () => {
+      if (representativePlantId) {
+        try {
+          const { data, error } = await supabase
+            .from('plant_status_logs')
+            .select('*')
+            .eq('plant_id', representativePlantId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (error) throw error;
+          setPlantStatus(data);
+        } catch (error) {
+          console.error('식물 상태 정보를 가져오는데 실패했습니다:', error);
+        }
+      }
+    };
+
+    fetchPlantStatus();
+  }, [representativePlantId]);
+
   // 감정 상태 계산 함수 (간단 버전)
   const getEmotionalState = (plant) => {
-    if (!plant) return "행복해요";
-    const { temperature, humidity, light } = plant.status;
-    const env = plant.environment;
+    if (!plant || !plantStatus) return "행복해요";
+    const { temperature, humidity, light } = plantStatus;
+    const env = {
+      temperature: {
+        min: plant.temp_range_min,
+        max: plant.temp_range_max
+      },
+      humidity: {
+        min: plant.humidity_range_min,
+        max: plant.humidity_range_max
+      },
+      light: {
+        min: plant.light_range_min,
+        max: plant.light_range_max
+      }
+    };
+
     if (temperature < env.temperature.min) return "추워요";
     if (temperature > env.temperature.max) return "더워요";
     if (humidity < env.humidity.min) return "건조해요";

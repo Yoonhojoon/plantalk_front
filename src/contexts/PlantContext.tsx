@@ -46,7 +46,11 @@ export const usePlantContext = () => {
 
 export const PlantProvider = ({ children }: PlantProviderProps) => {
   const [plants, setPlants] = useState<Plant[]>([]);
-  const [representativePlantId, setRepresentativePlantId] = useState<string | null>(null);
+  const [representativePlantId, setRepresentativePlantId] = useState<string | null>(() => {
+    // 로컬 스토리지에서 대표 식물 ID 불러오기
+    const savedId = localStorage.getItem('plantapp-representative');
+    return savedId || null;
+  });
   const { user } = useAuth();
 
   // Load plants from Supabase when user changes
