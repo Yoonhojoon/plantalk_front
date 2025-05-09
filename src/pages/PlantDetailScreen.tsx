@@ -56,7 +56,7 @@ export default function PlantDetailScreen() {
   const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
   const [sensors, setSensors] = useState<Sensor[]>([]);
   
-  const [speciesList, setSpeciesList] = useState<{ id: string, scientific_name: string }[]>([]);
+  const [speciesList, setSpeciesList] = useState<{ id: string, scientific_name: string, description: string }[]>([]);
   
   const [sensorStatus, setSensorStatus] = useState({ temperature: 0, humidity: 0, light: 0 });
   
@@ -180,7 +180,7 @@ export default function PlantDetailScreen() {
 
   useEffect(() => {
     const fetchSpecies = async () => {
-      const { data } = await supabase.from('plant_species').select('id, scientific_name');
+      const { data } = await supabase.from('plant_species').select('id, scientific_name, description');
       if (data) setSpeciesList(data);
     };
     fetchSpecies();
@@ -331,6 +331,7 @@ const emotionalState = getEmotionalState();
   );
   
   const speciesName = speciesList.find(s => s.id === plant?.species)?.scientific_name || plant?.species;
+  const speciesDescription = speciesList.find(s => s.id === plant?.species)?.description || "설명이 없습니다";
   
   return (
     <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
@@ -747,6 +748,7 @@ const emotionalState = getEmotionalState();
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">품종</h4>
                 <p className="text-sm">{speciesName}</p>
+                <p className="text-sm text-muted-foreground mt-1">{speciesDescription}</p>
               </div>
               
               <div>
