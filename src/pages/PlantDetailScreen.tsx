@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { usePlantEmotionNotification } from '@/hooks/usePlantEmotionNotification';
 
 interface Sensor {
   id: string;
@@ -58,6 +59,9 @@ export default function PlantDetailScreen() {
   const [speciesList, setSpeciesList] = useState<{ id: string, scientific_name: string }[]>([]);
   
   const [sensorStatus, setSensorStatus] = useState({ temperature: 0, humidity: 0, light: 0 });
+  
+  // 식물의 감정 상태 모니터링 및 알림
+  const { emotion } = usePlantEmotionNotification(id || '');
   
   const fetchSensorStatusByPlantId = async (plantId: string) => {
     const { data: plantData, error: plantError } = await supabase
@@ -819,6 +823,12 @@ const emotionalState = getEmotionalState();
             </div>
           </CardContent>
         </Card>
+      )}
+      {emotion && (
+        <div className="mt-4 p-4 bg-background rounded-lg shadow">
+          <h3 className="text-lg font-semibold">현재 감정 상태</h3>
+          <p className="text-muted-foreground">{emotion}</p>
+        </div>
       )}
     </div>
   );
