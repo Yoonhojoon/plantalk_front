@@ -29,6 +29,7 @@ export const usePlantEmotionNotification = (plantId: string) => {
       
       if (error) throw error;
       return data;
+      
     }
   });
 

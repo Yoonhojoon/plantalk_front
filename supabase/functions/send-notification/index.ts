@@ -20,6 +20,7 @@ serve(async (req) => {
     // 요청 본문 파싱
     let body;
     const contentType = req.headers.get('content-type');
+    console.log("contentType:", contentType);
     if (!contentType || !contentType.includes('application/json')) {
       return new Response(
         JSON.stringify({ error: 'Content-Type이 application/json이어야 합니다.' }),
