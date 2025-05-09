@@ -40,30 +40,28 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-plant-light-green/40 dark:bg-gray-900 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-8 fade-in">
-        <div className="flex flex-col items-center mb-8">
-          <Logo size="large" />
-        </div>
-        
+    <div className="min-h-screen bg-plant-light-green/40 dark:bg-gray-900 flex flex-col justify-between p-6">
+      <div className="w-full flex flex-col items-center mt-12 fade-in">
+        <Logo size="large" />
+      </div>
+      
+      <div className="w-full max-w-md mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Input
               type="text"
               placeholder="이름"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700 dark:border-gray-600"
+              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700/90 dark:border-gray-600 backdrop-blur-sm"
             />
-          </div>
           
-          <div className="space-y-2">
             <Input
               type="password"
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700 dark:border-gray-600"
+              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700/90 dark:border-gray-600 backdrop-blur-sm"
             />
           </div>
           
