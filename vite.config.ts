@@ -19,8 +19,9 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'MoodGreen',
         short_name: 'MoodGreen',
-        start_url: '.',
+        start_url: '/',
         display: 'standalone',
+        orientation: 'portrait',
         background_color: '#ffffff',
         theme_color: '#4caf50',
         icons: [
