@@ -1,17 +1,12 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-
-interface User {
-  fullName: string;
-  email?: string;
-  avatar?: string;
-}
+import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (fullName: string, password: string) => Promise<boolean>;
-  signup: (fullName: string, password: string, email?: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, fullName: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -34,51 +29,86 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('plantapp-user');
-    const savedAuth = localStorage.getItem('plantapp-auth');
-    
-    if (savedUser && savedAuth === 'true') {
-      setUser(JSON.parse(savedUser));
-      setIsAuthenticated(true);
-    }
+    // 현재 세션 확인
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+      }
+    };
+
+    checkSession();
+
+    // 인증 상태 변경 구독
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (fullName: string, password: string): Promise<boolean> => {
-    // In a real app, we would make an API call to authenticate
-    // For this MVP, we'll just simulate a successful login
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const user = { fullName };
-        setUser(user);
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.user) {
+        setUser(data.user);
         setIsAuthenticated(true);
-        localStorage.setItem('plantapp-user', JSON.stringify(user));
-        localStorage.setItem('plantapp-auth', 'true');
-        resolve(true);
-      }, 500);
-    });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
-  const signup = async (fullName: string, password: string, email?: string): Promise<boolean> => {
-    // In a real app, we would make an API call to register
-    // For this MVP, we'll just simulate a successful signup
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const user = { fullName, email };
-        setUser(user);
-        setIsAuthenticated(true);
-        localStorage.setItem('plantapp-user', JSON.stringify(user));
-        localStorage.setItem('plantapp-auth', 'true');
-        resolve(true);
-      }, 500);
-    });
+  const signup = async (email: string, password: string, fullName: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('plantapp-user');
-    localStorage.removeItem('plantapp-auth');
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const value = {

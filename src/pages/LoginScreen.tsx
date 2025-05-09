@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,10 @@ import Logo from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+console.log('LoginScreen 렌더링됨');
+
 export default function LoginScreen() {
-  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -17,23 +18,25 @@ export default function LoginScreen() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fullName || !password) {
-      toast.error("이름과 비밀번호를 모두 입력해주세요");
+    if (!email || !password) {
+      toast.error("이메일과 비밀번호를 모두 입력해주세요");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const success = await login(fullName, password);
+      const success = await login(email, password);
       if (success) {
         toast.success("로그인 성공!");
-        navigate('/dashboard');
+        console.log('Login successful, navigating to dashboard');
+        navigate('/dashboard', { replace: true });
       } else {
         toast.error("로그인 실패. 다시 시도해주세요.");
       }
-    } catch (error) {
-      toast.error("오류가 발생했습니다. 다시 시도해주세요.");
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || "오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -49,10 +52,10 @@ export default function LoginScreen() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <Input
-              type="text"
-              placeholder="이름"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              type="email"
+              placeholder="이메일"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700/90 dark:border-gray-600 backdrop-blur-sm"
             />
           

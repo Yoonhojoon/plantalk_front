@@ -14,6 +14,7 @@ import RegisterPlantScreen from "./pages/RegisterPlantScreen";
 import NotificationsScreen from "./pages/NotificationsScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import PlantDetailScreen from "./pages/PlantDetailScreen";
+import PlantsScreen from "./pages/PlantsScreen";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import { PlantProvider } from "./contexts/PlantContext";
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardScreen />} />
+                  <Route path="/plants" element={<PlantsScreen />} />
                   <Route path="/register-plant" element={<RegisterPlantScreen />} />
                   <Route path="/plant-detail/:id" element={<PlantDetailScreen />} />
                   <Route path="/notifications" element={<NotificationsScreen />} />

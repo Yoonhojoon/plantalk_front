@@ -1,6 +1,5 @@
-
 import { Link, useLocation } from "react-router-dom";
-import { Home, Bell, User } from "lucide-react";
+import { Home, Bell, User, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNavigation() {
@@ -12,6 +11,11 @@ export default function BottomNavigation() {
       icon: <Home size={20} />,
       label: "홈",
       path: "/dashboard",
+    },
+    {
+      icon: <Leaf size={20} />,
+      label: "식물들",
+      path: "/plants",
     },
     {
       icon: <Bell size={20} />,

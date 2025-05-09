@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Button } from "@/components/ui/button";
@@ -205,32 +204,42 @@ export default function NotificationsScreen() {
           {notifications.map((notification) => (
             <div 
               key={notification.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex"
+              className={`relative flex items-center gap-3 rounded-2xl p-4 shadow-md border bg-white dark:bg-gray-800 transition-all
+                ${notification.type === 'watering' ? 'border-blue-100 dark:border-blue-900/30' : 'border-yellow-100 dark:border-yellow-900/20'}`}
             >
-              <div className="mr-3 mt-1">
+              {/* 식물 썸네일 */}
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center">
+                {notification.plant.image ? (
+                  <img src={notification.plant.image} alt={notification.plant.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">🌱</span>
+                )}
+              </div>
+              {/* 알림 아이콘 */}
+              <div className="flex-shrink-0 ml-1">
                 {notification.icon}
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-medium">
+              {/* 알림 내용 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-semibold text-base truncate">
                     {notification.message}
                   </h3>
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <Clock size={12} className="inline mr-1" /> 
+                  <div className="text-xs text-gray-400 flex items-center ml-2 whitespace-nowrap">
+                    <Clock size={12} className="inline mr-1" />
                     {formatTime(notification.timestamp)}
                   </div>
                 </div>
                 {notification.details && (
-                  <p className="text-sm text-gray-500">
-                    {notification.details}
-                  </p>
+                  <p className="text-xs text-gray-500 mb-1 truncate">{notification.details}</p>
                 )}
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-gray-400">{notification.plant.name}</p>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-gray-500 font-medium">{notification.plant.name}</span>
                   <Button
-                    variant="outline"
+                    variant={notification.type === 'watering' ? 'default' : 'outline'}
                     size="sm"
-                    className="text-xs h-7 px-2 text-green-600 border-green-200 hover:bg-green-50 dark:text-green-400 dark:border-green-900 dark:hover:bg-green-900/20"
+                    className={`text-xs h-7 px-3 rounded-full
+                      ${notification.type === 'watering' ? 'bg-plant-green text-white hover:bg-plant-dark-green' : 'text-yellow-700 border-yellow-200 hover:bg-yellow-50 dark:text-yellow-300 dark:border-yellow-900 dark:hover:bg-yellow-900/20'}`}
                     onClick={() => handleComplete(notification)}
                   >
                     완료

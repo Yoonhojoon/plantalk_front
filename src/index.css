@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -71,9 +73,9 @@
     @apply border-border;
   }
 
-  body {
+  body, html, #root {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', 'Nanum Gothic', '나눔고딕', '돋움', Dotum, Arial, sans-serif;
     background-color: #ffffff; /* 흰색 배경 */
   }
   

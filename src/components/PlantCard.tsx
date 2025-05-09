@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Plant } from "../models/PlantModel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Thermometer, Droplet, Sun, Droplets } from "lucide-react";
+import { Trash2, Thermometer, Droplet, Sun, Droplets, Star } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +23,7 @@ interface PlantCardProps {
 }
 
 export default function PlantCard({ plant }: PlantCardProps) {
-  const { removePlant, updatePlantWatering } = usePlantContext();
+  const { removePlant, updatePlantWatering, representativePlantId, setRepresentativePlant, clearRepresentativePlant } = usePlantContext();
   const [open, setOpen] = useState(false);
   const [wateringDialogOpen, setWateringDialogOpen] = useState(false);
   
@@ -79,9 +78,52 @@ export default function PlantCard({ plant }: PlantCardProps) {
     plant.status.light >= plant.environment.light.min &&
     plant.status.light <= plant.environment.light.max;
 
+  // 대표 식물 지정/해제 핸들러
+  const handleSetRepresentative = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setRepresentativePlant(plant.id);
+    toast.success(`'${plant.name}'이(가) 대표 식물로 지정되었습니다!`);
+  };
+  const handleClearRepresentative = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearRepresentativePlant();
+    toast.success("대표 식물이 해제되었습니다.");
+  };
+
+  const isRepresentative = representativePlantId === plant.id;
+
   return (
     <Link to={`/plant-detail/${plant.id}`} className="block">
       <Card className="plant-card border-0 relative">
+        {/* 대표 식물 뱃지 및 별표 버튼 */}
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+          {isRepresentative && (
+            <div className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+              대표
+            </div>
+          )}
+          <Button
+            size="icon"
+            variant="ghost"
+            className={`rounded-full border-none p-1 ${isRepresentative ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+            aria-label={isRepresentative ? '대표 해제' : '대표로 지정'}
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (isRepresentative) {
+                clearRepresentativePlant();
+                toast.success("대표 식물이 해제되었습니다.");
+              } else {
+                setRepresentativePlant(plant.id);
+                toast.success(`'${plant.name}'이(가) 대표 식물로 지정되었습니다!`);
+              }
+            }}
+          >
+            <Star fill={isRepresentative ? '#facc15' : 'none'} size={22} />
+          </Button>
+        </div>
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
             <Button 
@@ -180,18 +222,19 @@ export default function PlantCard({ plant }: PlantCardProps) {
                 )}
               </Button>
             </div>
-            
-            <div className="flex items-center gap-1">
-              <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-red-100 text-red-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
-                <Thermometer size={16} />
-              </div>
-              
-              <div className={`p-1.5 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
-                <Droplet size={16} />
-              </div>
-              
-              <div className={`p-1.5 rounded-lg ${isLightOk ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
-                <Sun size={16} />
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-1">
+                <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-red-100 text-red-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
+                  <Thermometer size={16} />
+                </div>
+                
+                <div className={`p-1.5 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
+                  <Droplet size={16} />
+                </div>
+                
+                <div className={`p-1.5 rounded-lg ${isLightOk ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
+                  <Sun size={16} />
+                </div>
               </div>
             </div>
           </div>

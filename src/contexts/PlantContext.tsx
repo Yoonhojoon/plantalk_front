@@ -9,6 +9,9 @@ interface PlantContextType {
   updatePlantWatering: (id: string, lastWatered: string) => void;
   getPlantsNeedingAttention: () => Plant[];
   updatePlant: (id: string, updatedPlant: Partial<Plant>) => void;
+  representativePlantId: string | null;
+  setRepresentativePlant: (id: string) => void;
+  clearRepresentativePlant: () => void;
 }
 
 const PlantContext = createContext<PlantContextType | undefined>(undefined);
@@ -27,8 +30,9 @@ interface PlantProviderProps {
 
 export const PlantProvider = ({ children }: PlantProviderProps) => {
   const [plants, setPlants] = useState<Plant[]>([]);
+  const [representativePlantId, setRepresentativePlantId] = useState<string | null>(null);
 
-  // Load plants from localStorage on mount
+  // Load plants and representativePlantId from localStorage on mount
   useEffect(() => {
     const savedPlants = localStorage.getItem('plantapp-plants');
     if (savedPlants) {
@@ -78,6 +82,10 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
         }
       ]);
     }
+    const savedRepId = localStorage.getItem('plantapp-representative');
+    if (savedRepId) {
+      setRepresentativePlantId(savedRepId);
+    }
   }, []);
 
   // Save plants to localStorage whenever they change
@@ -86,6 +94,15 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
       localStorage.setItem('plantapp-plants', JSON.stringify(plants));
     }
   }, [plants]);
+
+  // Save representativePlantId to localStorage whenever it changes
+  useEffect(() => {
+    if (representativePlantId) {
+      localStorage.setItem('plantapp-representative', representativePlantId);
+    } else {
+      localStorage.removeItem('plantapp-representative');
+    }
+  }, [representativePlantId]);
 
   const addPlant = (name: string, species: string, location: string, image: string, environment: PlantEnvironment, wateringInterval: number, lastWatered?: string) => {
     const newPlant: Plant = {
@@ -125,6 +142,10 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
 
   const removePlant = (id: string) => {
     setPlants(plants.filter((plant) => plant.id !== id));
+    // 대표 식물이 삭제되면 대표 해제
+    if (representativePlantId === id) {
+      setRepresentativePlantId(null);
+    }
   };
 
   const getPlantsNeedingAttention = () => {
@@ -151,6 +172,14 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
     ));
   };
 
+  const setRepresentativePlant = (id: string) => {
+    setRepresentativePlantId(id);
+  };
+
+  const clearRepresentativePlant = () => {
+    setRepresentativePlantId(null);
+  };
+
   const value = {
     plants,
     addPlant,
@@ -158,7 +187,10 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
     removePlant,
     updatePlantWatering,
     getPlantsNeedingAttention,
-    updatePlant
+    updatePlant,
+    representativePlantId,
+    setRepresentativePlant,
+    clearRepresentativePlant
   };
 
   return <PlantContext.Provider value={value}>{children}</PlantContext.Provider>;

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,15 +31,16 @@ export default function SignUpScreen() {
     setIsLoading(true);
     
     try {
-      const success = await signup(fullName, password, email);
+      const success = await signup(email, password, fullName);
       if (success) {
-        toast.success("계정이 성공적으로 생성되었습니다!");
-        navigate('/dashboard');
+        toast.success("계정이 성공적으로 생성되었습니다! 이메일을 확인해주세요.");
+        navigate('/login');
       } else {
         toast.error("회원가입 실패. 다시 시도해주세요.");
       }
-    } catch (error) {
-      toast.error("오류가 발생했습니다. 다시 시도해주세요.");
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast.error(error.message || "오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
