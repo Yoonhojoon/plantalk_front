@@ -61,7 +61,7 @@ export default function PlantDetailScreen() {
   const [sensorStatus, setSensorStatus] = useState({ temperature: 0, humidity: 0, light: 0 });
   
   // 식물의 감정 상태 모니터링 및 알림
-  const { emotion } = usePlantEmotionNotification(id || '');
+  const { emotion, testNotification } = usePlantEmotionNotification(id || '');
   
   const fetchSensorStatusByPlantId = async (plantId: string) => {
     const { data: plantData, error: plantError } = await supabase
@@ -334,37 +334,26 @@ const emotionalState = getEmotionalState();
   
   return (
     <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="mr-2" 
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <h1 className="text-xl font-bold">{plant.name}</h1>
-        </div>
-        {isEditing ? (
-          <Button 
-            size="icon"
-            className="bg-plant-green hover:bg-plant-dark-green"
-            onClick={handleSave}
-          >
-            <Check size={20} />
-          </Button>
-        ) : (
-          <Button 
-            size="icon"
-            variant="ghost"
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil size={20} />
-          </Button>
-        )}
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="mr-2" 
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft size={20} />
+        </Button>
+        <h1 className="text-xl font-bold">{plant?.name || '식물 상세'}</h1>
       </div>
-      
+
+      {/* 알림 테스트 버튼 */}
+      <Button
+        onClick={testNotification}
+        className="w-full mb-4 bg-plant-green hover:bg-plant-dark-green"
+      >
+        알림 테스트
+      </Button>
+
       {/* Horizontal split layout - Plant Character and Status */}
       <div className="flex mb-6">
         {/* Left side (50%): Plant Image */}

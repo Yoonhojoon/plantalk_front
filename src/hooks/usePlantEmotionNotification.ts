@@ -23,7 +23,7 @@ export const usePlantEmotionNotification = (plantId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('plants')
-        .select('name, sensor_id')
+        .select('id, name, sensor_id')
         .eq('id', plantId)
         .single();
       
@@ -75,6 +75,43 @@ export const usePlantEmotionNotification = (plantId: string) => {
     }
   };
 
+  const sendTestNotification = async () => {
+    try {
+      if (!token) {
+        console.error('FCM 토큰이 없습니다.');
+        return;
+      }
+
+      if (!plantData) {
+        console.error('식물 정보가 없습니다.');
+        return;
+      }
+
+      console.log('테스트 알림 전송 시도:', {
+        fcmToken: token,
+        plantName: plantData.name,
+        plantId: plantData.id
+      });
+
+      await sendFCMNotification({
+        token,
+        title: '테스트 알림',
+        body: `${plantData.name}의 테스트 알림입니다.`,
+        data: {
+          plantId: plantData.id.toString(),
+          type: 'test'
+        }
+      });
+
+      console.log('테스트 알림 전송 성공');
+    } catch (error) {
+      console.error('테스트 알림 전송 실패:', error);
+      if (error instanceof Error) {
+        console.error('에러 상세:', error.message);
+      }
+    }
+  };
+
   useEffect(() => {
     if (emotion && emotion !== 'happy' && token && plantData?.name) {
       sendFCMNotification({
@@ -91,5 +128,5 @@ export const usePlantEmotionNotification = (plantId: string) => {
     }
   }, [emotion, plantId, token, plantData?.name]);
 
-  return { emotion, testNotification };
+  return { emotion, testNotification, sendTestNotification };
 }; 
