@@ -5,29 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MoodGreen</title>
-    <script type="application/manifest+json">
-      {
-        "name": "MoodGreen",
-        "short_name": "MoodGreen",
-        "description": "MoodGreen - 당신의 감정을 기록하세요",
-        "start_url": "/",
-        "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#4CAF50",
-        "icons": [
-          {
-            "src": "/icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-          },
-          {
-            "src": "/icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-          }
-        ]
-      }
-    </script>
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#4caf50" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -44,12 +22,12 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-              console.log('Firebase Service Worker registration successful:', registration);
+              console.log('Service Worker registration successful:', registration);
             })
             .catch(err => {
-              console.error('Firebase Service Worker registration failed:', err);
+              console.error('Service Worker registration failed:', err);
             });
         });
       }
