@@ -40,30 +40,28 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-plant-light-green/40 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8 fade-in">
-        <div className="flex flex-col items-center mb-8">
-          <Logo size="large" />
-        </div>
-        
+    <div className="min-h-screen bg-plant-light-green/40 dark:bg-gray-900 flex flex-col justify-between p-6">
+      <div className="w-full flex flex-col items-center mt-12 fade-in">
+        <Logo size="large" />
+      </div>
+      
+      <div className="w-full max-w-md mx-auto mt-auto mb-12">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Input
               type="text"
               placeholder="이름"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="plant-form-input h-12"
+              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700/90 dark:border-gray-600 backdrop-blur-sm"
             />
-          </div>
           
-          <div className="space-y-2">
             <Input
               type="password"
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="plant-form-input h-12"
+              className="plant-form-input h-12 text-foreground dark:text-white dark:bg-gray-700/90 dark:border-gray-600 backdrop-blur-sm"
             />
           </div>
           
@@ -77,9 +75,9 @@ export default function LoginScreen() {
         </form>
         
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             계정이 없으신가요?{" "}
-            <Link to="/signup" className="text-plant-green hover:underline font-medium">
+            <Link to="/signup" className="text-plant-green hover:underline font-medium dark:text-plant-light-green">
               회원가입
             </Link>
           </p>

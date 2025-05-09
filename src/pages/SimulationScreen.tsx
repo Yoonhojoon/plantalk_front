@@ -1,4 +1,3 @@
-
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Thermometer, Droplet, Sun } from "lucide-react";
@@ -6,6 +5,7 @@ import EnvironmentSlider from "@/components/EnvironmentSlider";
 import { PlantStatus } from "@/models/PlantModel";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 
 export default function SimulationScreen() {
   const { plants, updatePlantStatus } = usePlantContext();
@@ -25,6 +25,10 @@ export default function SimulationScreen() {
         ...status
       });
     }
+  };
+
+  const handleEnvironmentChange = (plantId: string, field: keyof PlantStatus, value: number) => {
+    handleStatusChange(plantId, { [field]: value });
   };
 
   const getStatusEmoji = (current: number, min: number, max: number) => {
@@ -122,34 +126,83 @@ export default function SimulationScreen() {
                       <div className="space-y-4">
                         <h3 className="text-sm font-medium">현재 환경 조절</h3>
                         
-                        <EnvironmentSlider
-                          label="온도 (°C)"
-                          value={plant.status.temperature}
-                          min={0}
-                          max={40}
-                          icon={<Thermometer size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { temperature: value })}
-                        />
+                        {/* Temperature Slider */}
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-medium flex items-center">
+                            <Thermometer size={14} className="mr-1 text-red-500" />
+                            온도 조절
+                          </h4>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-muted-foreground">현재값</span>
+                              <span className="text-xs font-medium">{plant.status.temperature}°C</span>
+                            </div>
+                            <Slider
+                              value={[plant.status.temperature]}
+                              min={0}
+                              max={40}
+                              step={1}
+                              onValueChange={(values) => handleEnvironmentChange(plant.id, 'temperature', values[0])}
+                              className="bg-gradient-to-r from-blue-100 to-red-100 dark:from-blue-900/30 dark:to-red-900/30"
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                              <span>0°C</span>
+                              <span>40°C</span>
+                            </div>
+                          </div>
+                        </div>
                         
-                        <EnvironmentSlider
-                          label="조도 (%)"
-                          value={plant.status.light}
-                          min={0}
-                          max={100}
-                          step={5}
-                          icon={<Sun size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { light: value })}
-                        />
+                        {/* Light Slider */}
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-medium flex items-center">
+                            <Sun size={14} className="mr-1 text-yellow-500" />
+                            조도 조절
+                          </h4>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-muted-foreground">현재값</span>
+                              <span className="text-xs font-medium">{plant.status.light}%</span>
+                            </div>
+                            <Slider
+                              value={[plant.status.light]}
+                              min={0}
+                              max={100}
+                              step={5}
+                              onValueChange={(values) => handleEnvironmentChange(plant.id, 'light', values[0])}
+                              className="bg-gradient-to-r from-gray-100 to-yellow-100 dark:from-gray-800/30 dark:to-yellow-900/30"
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                              <span>0%</span>
+                              <span>100%</span>
+                            </div>
+                          </div>
+                        </div>
                         
-                        <EnvironmentSlider
-                          label="습도 (%)"
-                          value={plant.status.humidity}
-                          min={0}
-                          max={100}
-                          step={5}
-                          icon={<Droplet size={16} />}
-                          onChange={(value) => handleStatusChange(plant.id, { humidity: value })}
-                        />
+                        {/* Humidity Slider */}
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-medium flex items-center">
+                            <Droplet size={14} className="mr-1 text-blue-500" />
+                            습도 조절
+                          </h4>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-muted-foreground">현재값</span>
+                              <span className="text-xs font-medium">{plant.status.humidity}%</span>
+                            </div>
+                            <Slider
+                              value={[plant.status.humidity]}
+                              min={0}
+                              max={100}
+                              step={5}
+                              onValueChange={(values) => handleEnvironmentChange(plant.id, 'humidity', values[0])}
+                              className="bg-gradient-to-r from-gray-100 to-blue-100 dark:from-gray-800/30 dark:to-blue-900/30"
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                              <span>0%</span>
+                              <span>100%</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

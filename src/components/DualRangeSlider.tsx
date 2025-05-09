@@ -35,6 +35,8 @@ export default function DualRangeSlider({
   const [maxInput, setMaxInput] = useState(maxValue.toString());
   const [isMinFocused, setIsMinFocused] = useState(false);
   const [isMaxFocused, setIsMaxFocused] = useState(false);
+  const [isDraggingMin, setIsDraggingMin] = useState(false);
+  const [isDraggingMax, setIsDraggingMax] = useState(false);
 
   // Calculate percentage for CSS variables
   const minPos = ((min - minLimit) / (maxLimit - minLimit)) * 100;
@@ -50,21 +52,33 @@ export default function DualRangeSlider({
     }
   }, [minValue, maxValue]);
 
+  // When min handle is moved
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMin = Number(e.target.value);
     if (newMin <= max) {
       setMin(newMin);
       setMinInput(newMin.toString());
       onChange(newMin, max);
+    } else {
+      // If min exceeds max, set min equal to max
+      setMin(max);
+      setMinInput(max.toString());
+      onChange(max, max);
     }
   };
 
+  // When max handle is moved
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMax = Number(e.target.value);
     if (newMax >= min) {
       setMax(newMax);
       setMaxInput(newMax.toString());
       onChange(min, newMax);
+    } else {
+      // If max is less than min, set max equal to min
+      setMax(min);
+      setMaxInput(min.toString());
+      onChange(min, min);
     }
   };
 
@@ -152,10 +166,12 @@ export default function DualRangeSlider({
         </div>
       </div>
 
-      <div className="h-5 relative">
-        <div className="absolute inset-0 h-1 top-1/2 -translate-y-1/2 bg-gray-200 rounded">
+      <div className="h-10 relative">
+        {/* Track background */}
+        <div className="absolute inset-0 h-1.5 top-1/2 -translate-y-1/2 bg-gray-200 dark:bg-gray-700 rounded-full">
+          {/* Selected range */}
           <div 
-            className="absolute h-full bg-plant-green rounded" 
+            className="absolute h-full bg-plant-green rounded-full" 
             style={{ 
               left: `${minPos}%`,
               right: `${100 - maxPos}%`
@@ -163,6 +179,7 @@ export default function DualRangeSlider({
           />
         </div>
         
+        {/* Min Range Slider */}
         <input
           type="range"
           min={minLimit}
@@ -170,9 +187,14 @@ export default function DualRangeSlider({
           step={step}
           value={min}
           onChange={handleMinChange}
-          className="absolute w-full h-5 opacity-0 cursor-pointer"
+          onMouseDown={() => setIsDraggingMin(true)}
+          onMouseUp={() => setIsDraggingMin(false)}
+          onTouchStart={() => setIsDraggingMin(true)}
+          onTouchEnd={() => setIsDraggingMin(false)}
+          className={`absolute w-full h-10 opacity-0 cursor-pointer z-10 ${isDraggingMax ? 'pointer-events-none' : ''}`}
         />
         
+        {/* Max Range Slider */}
         <input
           type="range"
           min={minLimit}
@@ -180,16 +202,28 @@ export default function DualRangeSlider({
           step={step}
           value={max}
           onChange={handleMaxChange}
-          className="absolute w-full h-5 opacity-0 cursor-pointer"
+          onMouseDown={() => setIsDraggingMax(true)}
+          onMouseUp={() => setIsDraggingMax(false)}
+          onTouchStart={() => setIsDraggingMax(true)}
+          onTouchEnd={() => setIsDraggingMax(false)}
+          className={`absolute w-full h-10 opacity-0 cursor-pointer z-10 ${isDraggingMin ? 'pointer-events-none' : ''}`}
         />
         
+        {/* Min handle */}
         <div 
-          className="absolute w-4 h-4 bg-white border-2 border-plant-green rounded-full top-1/2 -translate-y-1/2 -ml-2"
+          className={cn(
+            "absolute w-5 h-5 bg-white border-2 border-plant-green rounded-full top-1/2 -translate-y-1/2 -ml-2.5 shadow-md transition-transform",
+            isDraggingMin && "scale-110"
+          )}
           style={{ left: `${minPos}%` }}
         />
         
+        {/* Max handle */}
         <div 
-          className="absolute w-4 h-4 bg-white border-2 border-plant-green rounded-full top-1/2 -translate-y-1/2 -ml-2"
+          className={cn(
+            "absolute w-5 h-5 bg-white border-2 border-plant-green rounded-full top-1/2 -translate-y-1/2 -ml-2.5 shadow-md transition-transform",
+            isDraggingMax && "scale-110"
+          )}
           style={{ left: `${maxPos}%` }}
         />
       </div>

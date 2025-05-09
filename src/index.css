@@ -76,15 +76,24 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
   }
+  
+  input, select, textarea {
+    @apply text-foreground;
+  }
+  
+  /* Ensure dark mode form inputs have readable text */
+  .dark input, .dark select, .dark textarea {
+    @apply text-foreground bg-secondary border-border;
+  }
 }
 
 /* Custom styles */
 .plant-card {
-  @apply bg-white rounded-2xl shadow-md overflow-hidden transition-all hover:shadow-lg;
+  @apply bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transition-all hover:shadow-lg;
 }
 
 .plant-form-input {
-  @apply bg-white/80 border-0 rounded-xl focus:ring-2 focus:ring-plant-green/30;
+  @apply bg-white/80 dark:bg-gray-700 border-0 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-plant-green/30;
 }
 
 .fade-in {

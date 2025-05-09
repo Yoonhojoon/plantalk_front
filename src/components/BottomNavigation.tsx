@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Home, Bell, User, Settings } from "lucide-react";
+import { Home, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNavigation() {
@@ -22,11 +22,6 @@ export default function BottomNavigation() {
       icon: <User size={20} />,
       label: "프로필",
       path: "/profile",
-    },
-    {
-      icon: <Settings size={20} />,
-      label: "설정",
-      path: "/settings",
     },
   ];
 

@@ -156,18 +156,35 @@ export default function PlantDetailScreen() {
         />
       </div>
       
+      {/* Horizontal split layout - Plant Character and Status */}
       <div className="flex mb-6">
-        {/* Plant Character */}
-        <div className="w-1/3 pr-4">
+        {/* Left side (50%): Plant Character */}
+        <div className="w-1/2 pr-2 flex items-center justify-center">
+          {/* Character image placeholder */}
           <PlantCharacter emotionalState={emotionalState} />
         </div>
         
-        {/* Plant Status */}
-        <div className="w-2/3">
-          <Card className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden">
+        {/* Right side (50%): Plant Status */}
+        <div className="w-1/2 pl-2">
+          <Card className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden h-full">
             <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">{plant.name}의 상태</h3>
-              <p className="text-sm mb-4 text-plant-dark-green font-medium">"{emotionalState}"</p>
+              <div className="flex items-center mb-2">
+                <h3 className="font-semibold">{plant.name}의 상태</h3>
+              </div>
+              
+              <div className="flex items-center mb-4">
+                <p className="text-sm text-plant-dark-green font-medium mr-2">"{emotionalState}"</p>
+                <div className="text-lg">
+                  {emotionalState === '행복해요' && '😊'}
+                  {emotionalState === '추워요' && '🥶'}
+                  {emotionalState === '더워요' && '🥵'}
+                  {emotionalState === '건조해요' && '😰'}
+                  {emotionalState === '습해요' && '💧'}
+                  {emotionalState === '목말라요' && '🥺'}
+                  {emotionalState === '너무 어두워요' && '😴'}
+                  {emotionalState === '햇빛이 너무 강해요' && '😎'}
+                </div>
+              </div>
               
               <div className="space-y-3">
                 <div className="flex items-center">
