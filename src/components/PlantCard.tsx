@@ -192,11 +192,7 @@ export default function PlantCard({ plant }: PlantCardProps) {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-3">
             <div className="flex justify-between">
               <div>
-                <h3 className="text-white font-medium text-lg">{plant.name}</h3>
-                <p className="text-white/80 text-xs">{plant.species}</p>
-              </div>
-              <div className="bg-plant-green/90 text-white text-xs font-semibold px-2 py-1 rounded-full self-start">
-                {plant.location === "Indoor" ? "실내" : plant.location === "Outdoor" ? "실외" : "발코니"}
+              <h3 className="text-white font-medium text-lg bg -white/80">{plant.name}</h3>
               </div>
             </div>
           </div>
@@ -208,25 +204,23 @@ export default function PlantCard({ plant }: PlantCardProps) {
               <Button 
                 variant="outline" 
                 size="sm"
-                className={`flex items-center ${daysUntilWatering <= 0 ? 'text-red-500 border-red-200 hover:bg-red-50' : 'text-blue-500 border-blue-200 hover:bg-blue-50'}`}
+                className={`flex items-center ${daysUntilWatering <= 1 ? 'text-red-500 border-red-200 hover:bg-red-50' : 'text-blue-500 border-blue-200 hover:bg-blue-50'}`}
                 onClick={handleWater}
               >
                 {daysUntilWatering <= 0 ? (
                   <>
-                    <Droplets className="mr-1" size={16} />
-                    <span className="text-xs">물을 주세요</span>
+                    <span className="text-xs">D-day</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-xs font-bold mr-1">D-{daysUntilWatering}</span>
-                    <span className="text-xs">물</span>
+                    <span className="text-xs font-bold">D-{daysUntilWatering}</span>
                   </>
                 )}
               </Button>
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-1">
-                <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-red-100 text-red-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
+                <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
                   <Thermometer size={16} />
                 </div>
                 
