@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Thermometer, Droplet, Sun, Clock, Pencil, Check } from "lucide-react";
+import { ArrowLeft, Thermometer, Droplet, Sun, Clock, Pencil, Check, Camera, Image, Bluetooth } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,27 +10,60 @@ import { toast } from "sonner";
 import { Plant } from "@/models/PlantModel";
 import DualRangeSlider from "@/components/DualRangeSlider";
 import PlantCharacter from "@/components/PlantCharacter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
+interface Sensor {
+  id: string;
+  name: string;
+  status: 'connected' | 'disconnected';
+  signalStrength?: number;
+  measurements: {
+    temperature: boolean;
+    humidity: boolean;
+    light: boolean;
+  };
+}
 
 export default function PlantDetailScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { plants, updatePlantStatus } = usePlantContext();
+  const { plants, updatePlantStatus, updatePlant } = usePlantContext();
   
   const [plant, setPlant] = useState<Plant | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState("");
+  const [name, setName] = useState("");
+  const [species, setSpecies] = useState("");
+  const [location, setLocation] = useState("Indoor");
+  const [image, setImage] = useState("");
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedHour, setSelectedHour] = useState(12);
+  const [selectedMinute, setSelectedMinute] = useState(0);
   
   const [temperature, setTemperature] = useState({ min: 0, max: 0 });
   const [humidity, setHumidity] = useState({ min: 0, max: 0 });
   const [light, setLight] = useState({ min: 0, max: 0 });
   const [wateringInterval, setWateringInterval] = useState(7);
+  const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
+  const [sensors, setSensors] = useState<Sensor[]>([]);
   
   useEffect(() => {
     if (id && plants.length > 0) {
       const foundPlant = plants.find(p => p.id === id);
       if (foundPlant) {
         setPlant(foundPlant);
+        setName(foundPlant.name);
+        setSpecies(foundPlant.species);
+        setLocation(foundPlant.location);
+        setImage(foundPlant.image);
+        setDescription(foundPlant.type || "");
         setTemperature({
           min: foundPlant.environment.temperature.min,
           max: foundPlant.environment.temperature.max
@@ -45,21 +77,77 @@ export default function PlantDetailScreen() {
           max: foundPlant.environment.light.max
         });
         setWateringInterval(foundPlant.wateringInterval);
-        setDescription(foundPlant.type || "");
+        if (foundPlant.lastWatered) {
+          const date = new Date(foundPlant.lastWatered);
+          setLastWatered(date);
+          setSelectedHour(date.getHours());
+          setSelectedMinute(date.getMinutes());
+        }
+        // 임시 센서 데이터 (실제로는 API나 데이터베이스에서 가져와야 함)
+        setSensors([
+          {
+            id: '1',
+            name: '거실 센서',
+            status: 'connected',
+            signalStrength: 85,
+            measurements: {
+              temperature: true,
+              humidity: true,
+              light: true
+            }
+          }
+        ]);
       }
     }
   }, [id, plants]);
+
+  const handleImageSelect = () => {
+    // In a real app, this would open a file picker or camera
+    // For now, we'll use placeholder images
+    const placeholderImages = [
+      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500",
+      "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=500",
+      "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500",
+      "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=500"
+    ];
+    setImage(placeholderImages[Math.floor(Math.random() * placeholderImages.length)]);
+    toast.success("이미지가 변경되었습니다!");
+  };
+
+  const handleTimeSelect = (hour: number, minute: number) => {
+    if (lastWatered) {
+      const newDate = new Date(lastWatered);
+      newDate.setHours(hour, minute);
+      setLastWatered(newDate);
+    }
+    setShowTimePicker(false);
+  };
   
   const handleSave = () => {
     if (!plant) return;
     
+    // 환경 상태 업데이트
     updatePlantStatus(plant.id, {
       temperature: plant.status.temperature,
       humidity: plant.status.humidity,
       light: plant.status.light
     });
     
-    // In a real app, we would also update other plant details here
+    // 식물 정보 업데이트
+    updatePlant(plant.id, {
+      name,
+      species,
+      location,
+      image,
+      type: description,
+      environment: {
+        temperature,
+        humidity,
+        light
+      },
+      wateringInterval,
+      lastWatered: lastWatered ? lastWatered.toISOString() : undefined
+    });
     
     setIsEditing(false);
     toast.success("식물 정보가 업데이트되었습니다");
@@ -112,6 +200,20 @@ export default function PlantDetailScreen() {
   
 const emotionalState = getEmotionalState();
   
+  const MeasurementIcons = ({ measurements }: { measurements: Sensor['measurements'] }) => (
+    <div className="flex gap-1">
+      {measurements.temperature && (
+        <Thermometer size={14} className="text-red-500" />
+      )}
+      {measurements.humidity && (
+        <Droplet size={14} className="text-blue-500" />
+      )}
+      {measurements.light && (
+        <Sun size={14} className="text-yellow-500" />
+      )}
+    </div>
+  );
+  
   return (
     <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
       <div className="flex items-center justify-between mb-4">
@@ -149,7 +251,6 @@ const emotionalState = getEmotionalState();
       <div className="flex mb-6">
         {/* Left side (50%): Plant Character */}
         <div className="w-1/2 pr-2 flex items-center justify-center">
-          {/* Character image placeholder */}
           <PlantCharacter emotionalState={emotionalState} />
         </div>
         
@@ -195,6 +296,32 @@ const emotionalState = getEmotionalState();
                   <Clock size={18} className="text-plant-green mr-2" />
                   <span className="text-sm">물주기: {plant.wateringInterval}일</span>
                 </div>
+
+                <div className="flex items-center">
+                  <Clock size={18} className="text-plant-green mr-2" />
+                  <span className="text-sm">
+                    마지막 물 준 날: {plant.lastWatered ? format(new Date(plant.lastWatered), 'yyyy년 MM월 dd일', { locale: ko }) : '없음'}
+                  </span>
+                </div>
+
+                <div className="flex items-center">
+                  <Clock size={18} className="text-plant-green mr-2" />
+                  <span className="text-sm">
+                    다음 물주기까지: {
+                      plant.lastWatered ? (
+                        (() => {
+                          const lastWatered = new Date(plant.lastWatered);
+                          const nextWatering = new Date(lastWatered);
+                          nextWatering.setDate(nextWatering.getDate() + plant.wateringInterval);
+                          const today = new Date();
+                          const diffTime = nextWatering.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return diffDays > 0 ? `${diffDays}일 남음` : '오늘 물을 줘야 해요!';
+                        })()
+                      ) : '알 수 없음'
+                    }
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -204,24 +331,232 @@ const emotionalState = getEmotionalState();
       {/* Editable Information */}
       {isEditing ? (
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">식물 설명</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="min-h-24"
-              placeholder="이 식물에 대한 메모나 설명을 입력하세요"
+          <div className="space-y-4">
+            <Label htmlFor="name">식물 이름</Label>
+            <Input
+              id="name"
+              placeholder="예: 피스 릴리"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="plant-form-input"
             />
           </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">물주기 간격 (일)</label>
+
+          <div className="space-y-4">
+            <Label htmlFor="species">식물 품종</Label>
+            <div className="flex gap-2">
+              <Select
+                value={species}
+                onValueChange={setSpecies}
+              >
+                <SelectTrigger className="flex-1 plant-form-input">
+                  <SelectValue placeholder="품종 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="스파티필럼">스파티필럼</SelectItem>
+                  <SelectItem value="몬스테라">몬스테라</SelectItem>
+                  <SelectItem value="산세베리아">산세베리아</SelectItem>
+                  <SelectItem value="custom">직접 입력</SelectItem>
+                </SelectContent>
+              </Select>
+              {species === "custom" && (
+                <Input
+                  placeholder="품종 입력"
+                  value={species}
+                  onChange={(e) => setSpecies(e.target.value)}
+                  className="flex-1 plant-form-input"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label htmlFor="location">위치</Label>
+            <Select
+              value={location}
+              onValueChange={setLocation}
+            >
+              <SelectTrigger className="plant-form-input">
+                <SelectValue placeholder="위치 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Indoor">실내</SelectItem>
+                <SelectItem value="Outdoor">실외</SelectItem>
+                <SelectItem value="Balcony">발코니</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-4">
+            <Label htmlFor="lastWatered" className="flex items-center gap-2">
+              <Clock size={18} className="text-plant-green" />
+              마지막 물주기
+            </Label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "flex-1 justify-start text-left font-normal plant-form-input",
+                      !lastWatered && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {lastWatered ? (
+                      format(lastWatered, "PPP", { locale: ko })
+                    ) : (
+                      <span>날짜 선택</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={lastWatered}
+                    onSelect={setLastWatered}
+                    initialFocus
+                    locale={ko}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover open={showTimePicker} onOpenChange={setShowTimePicker}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-32 justify-start text-left font-normal plant-form-input",
+                      !lastWatered && "text-muted-foreground"
+                    )}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    {lastWatered ? (
+                      format(lastWatered, "HH:mm", { locale: ko })
+                    ) : (
+                      <span>시간 선택</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" align="start">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={selectedHour}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 23) {
+                            setSelectedHour(value);
+                          }
+                        }}
+                        className="w-16 text-center"
+                      />
+                      <span className="text-muted-foreground">시</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={selectedMinute}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 59) {
+                            setSelectedMinute(value);
+                          }
+                        }}
+                        className="w-16 text-center"
+                      />
+                      <span className="text-muted-foreground">분</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTimePicker(false)}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleTimeSelect(selectedHour, selectedMinute)}
+                    >
+                      확인
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Label htmlFor="wateringInterval" className="flex items-center gap-2">
+              <Clock size={18} className="text-plant-green" />
+              물주기 간격 (일)
+            </Label>
             <Input
+              id="wateringInterval"
               type="number"
               min="1"
               max="60"
               value={wateringInterval}
               onChange={(e) => setWateringInterval(Number(e.target.value))}
+              className="plant-form-input"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <Label>식물 이미지</Label>
+            {image ? (
+              <div className="relative overflow-hidden rounded-xl h-64">
+                <img 
+                  src={image} 
+                  alt="선택된 식물" 
+                  className="w-full h-full object-cover"
+                />
+                <Button
+                  type="button"
+                  className="absolute bottom-3 right-3 rounded-full bg-white text-plant-green hover:bg-white/90"
+                  onClick={handleImageSelect}
+                >
+                  이미지 변경
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-24 flex flex-col gap-2 rounded-xl border-dashed"
+                  onClick={handleImageSelect}
+                >
+                  <Camera size={24} />
+                  <span className="text-xs">사진 촬영</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-24 flex flex-col gap-2 rounded-xl border-dashed"
+                  onClick={handleImageSelect}
+                >
+                  <Image size={24} />
+                  <span className="text-xs">갤러리에서 선택</span>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>식물 설명</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-24"
+              placeholder="이 식물에 대한 메모나 설명을 입력하세요"
             />
           </div>
           
@@ -292,6 +627,50 @@ const emotionalState = getEmotionalState();
                 <p className="text-sm">온도: {plant.environment.temperature.min}°C ~ {plant.environment.temperature.max}°C</p>
                 <p className="text-sm">습도: {plant.environment.humidity.min}% ~ {plant.environment.humidity.max}%</p>
                 <p className="text-sm">광량: {plant.environment.light.min}% ~ {plant.environment.light.max}%</p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">연동된 센서</h4>
+                <div className="space-y-2">
+                  {sensors.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">연동된 센서가 없습니다</p>
+                  ) : (
+                    sensors.map((sensor) => (
+                      <div
+                        key={sensor.id}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Bluetooth
+                            size={16}
+                            className={sensor.status === 'connected' ? 'text-green-500' : 'text-red-500'}
+                          />
+                          <div>
+                            <p className="text-sm font-medium">{sensor.name}</p>
+                            <div className="flex items-center gap-2">
+                              <MeasurementIcons measurements={sensor.measurements} />
+                              <p className="text-xs text-muted-foreground">
+                                통합 환경 센서
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          {[1, 2, 3].map((bar) => (
+                            <div
+                              key={bar}
+                              className={`w-1 h-3 rounded-full ${
+                                (sensor.signalStrength || 0) >= bar * 30
+                                  ? sensor.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
+                                  : 'bg-muted-foreground/20'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

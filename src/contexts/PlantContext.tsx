@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Plant, PlantEnvironment, PlantStatus } from "../models/PlantModel";
 
@@ -7,8 +6,9 @@ interface PlantContextType {
   addPlant: (name: string, species: string, location: string, image: string, environment: PlantEnvironment, wateringInterval: number, lastWatered?: string) => void;
   updatePlantStatus: (id: string, status: PlantStatus) => void;
   removePlant: (id: string) => void;
-  updatePlantWatering: (id: string, lastWatered: string) => void; // Add this method
+  updatePlantWatering: (id: string, lastWatered: string) => void;
   getPlantsNeedingAttention: () => Plant[];
+  updatePlant: (id: string, updatedPlant: Partial<Plant>) => void;
 }
 
 const PlantContext = createContext<PlantContextType | undefined>(undefined);
@@ -143,13 +143,22 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
     });
   };
 
+  const updatePlant = (id: string, updatedPlant: Partial<Plant>) => {
+    setPlants(prev => prev.map(plant => 
+      plant.id === id 
+        ? { ...plant, ...updatedPlant }
+        : plant
+    ));
+  };
+
   const value = {
     plants,
     addPlant,
     updatePlantStatus,
     removePlant,
     updatePlantWatering,
-    getPlantsNeedingAttention
+    getPlantsNeedingAttention,
+    updatePlant
   };
 
   return <PlantContext.Provider value={value}>{children}</PlantContext.Provider>;

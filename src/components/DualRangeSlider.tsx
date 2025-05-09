@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
@@ -187,11 +186,10 @@ export default function DualRangeSlider({
           step={step}
           value={min}
           onChange={handleMinChange}
-          onMouseDown={() => setIsDraggingMin(true)}
-          onMouseUp={() => setIsDraggingMin(false)}
-          onTouchStart={() => setIsDraggingMin(true)}
-          onTouchEnd={() => setIsDraggingMin(false)}
-          className={`absolute w-full h-10 opacity-0 cursor-pointer z-10 ${isDraggingMax ? 'pointer-events-none' : ''}`}
+          className="absolute w-full h-10 opacity-0 cursor-pointer z-20"
+          style={{
+            clipPath: `inset(0 ${100 - minPos}% 0 0)`
+          }}
         />
         
         {/* Max Range Slider */}
@@ -202,11 +200,10 @@ export default function DualRangeSlider({
           step={step}
           value={max}
           onChange={handleMaxChange}
-          onMouseDown={() => setIsDraggingMax(true)}
-          onMouseUp={() => setIsDraggingMax(false)}
-          onTouchStart={() => setIsDraggingMax(true)}
-          onTouchEnd={() => setIsDraggingMax(false)}
-          className={`absolute w-full h-10 opacity-0 cursor-pointer z-10 ${isDraggingMin ? 'pointer-events-none' : ''}`}
+          className="absolute w-full h-10 opacity-0 cursor-pointer z-20"
+          style={{
+            clipPath: `inset(0 0 0 ${maxPos}%)`
+          }}
         />
         
         {/* Min handle */}

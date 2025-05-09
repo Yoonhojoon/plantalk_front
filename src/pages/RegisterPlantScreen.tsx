@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlantContext } from "@/contexts/PlantContext";
@@ -10,6 +9,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Camera, Image, Thermometer, Droplet, Sun, Clock } from "lucide-react";
 import { toast } from "sonner";
 import DualRangeSlider from "@/components/DualRangeSlider";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import SensorSelector from "@/components/SensorSelector";
+
+interface Sensor {
+  id: string;
+  name: string;
+  status: 'connected' | 'disconnected';
+  signalStrength?: number;
+  measurements: {
+    temperature: boolean;
+    humidity: boolean;
+    light: boolean;
+  };
+}
 
 export default function RegisterPlantScreen() {
   const navigate = useNavigate();
@@ -19,11 +37,18 @@ export default function RegisterPlantScreen() {
   const [species, setSpecies] = useState("");
   const [location, setLocation] = useState("Indoor");
   const [image, setImage] = useState("");
+  const [description, setDescription] = useState("");
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedHour, setSelectedHour] = useState(12);
+  const [selectedMinute, setSelectedMinute] = useState(0);
+  const [selectedSensors, setSelectedSensors] = useState<Sensor[]>([]);
+  
   const [temperature, setTemperature] = useState({ min: 18, max: 26 });
   const [humidity, setHumidity] = useState({ min: 40, max: 70 });
-  const [light, setLight] = useState({ min: 30, max: 70 });
-  const [wateringInterval, setWateringInterval] = useState(7); // Default: 7 days
-  
+  const [light, setLight] = useState({ min: 40, max: 70 });
+  const [wateringInterval, setWateringInterval] = useState(7);
+  const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
+
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
     // For now, we'll use placeholder images
@@ -40,22 +65,42 @@ export default function RegisterPlantScreen() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !species || !image) {
-      toast.error("모든 필수 항목을 입력하고 이미지를 선택해주세요");
+    if (!name || !species || !location || !lastWatered) {
+      toast.error("필수 정보를 모두 입력해주세요");
       return;
     }
+
+    if (selectedSensors.length === 0) {
+      toast.error("최소 하나 이상의 센서를 선택해주세요");
+      return;
+    }
+
+    // 센서가 하나라도 있으면 모든 환경 데이터를 측정할 수 있으므로 추가 검증 불필요
+    addPlant(
+      name,
+      species,
+      location,
+      image,
+      {
+        temperature,
+        humidity,
+        light
+      },
+      wateringInterval,
+      lastWatered.toISOString()
+    );
     
-    // Create current date for lastWatered
-    const currentDate = new Date().toISOString();
-    
-    addPlant(name, species, location, image, {
-      temperature,
-      light, 
-      humidity
-    }, wateringInterval, currentDate);
-    
-    toast.success("식물이 추가되었습니다!");
+    toast.success("식물이 등록되었습니다!");
     navigate("/dashboard");
+  };
+  
+  const handleTimeSelect = (hour: number, minute: number) => {
+    if (lastWatered) {
+      const newDate = new Date(lastWatered);
+      newDate.setHours(hour, minute);
+      setLastWatered(newDate);
+    }
+    setShowTimePicker(false);
   };
   
   return (
@@ -86,13 +131,30 @@ export default function RegisterPlantScreen() {
         
         <div className="space-y-4">
           <Label htmlFor="species">식물 품종</Label>
-          <Input
-            id="species"
-            placeholder="예: 스파티필럼"
-            value={species}
-            onChange={(e) => setSpecies(e.target.value)}
-            className="plant-form-input"
-          />
+          <div className="flex gap-2">
+            <Select
+              value={species}
+              onValueChange={setSpecies}
+            >
+              <SelectTrigger className="flex-1 plant-form-input">
+                <SelectValue placeholder="품종 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="스파티필럼">스파티필럼</SelectItem>
+                <SelectItem value="몬스테라">몬스테라</SelectItem>
+                <SelectItem value="산세베리아">산세베리아</SelectItem>
+                <SelectItem value="custom">직접 입력</SelectItem>
+              </SelectContent>
+            </Select>
+            {species === "custom" && (
+              <Input
+                placeholder="품종 입력"
+                value={species}
+                onChange={(e) => setSpecies(e.target.value)}
+                className="flex-1 plant-form-input"
+              />
+            )}
+          </div>
         </div>
         
         <div className="space-y-4">
@@ -110,6 +172,112 @@ export default function RegisterPlantScreen() {
               <SelectItem value="Balcony">발코니</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        
+        <div className="space-y-4">
+          <Label htmlFor="lastWatered" className="flex items-center gap-2">
+            <Clock size={18} className="text-plant-green" />
+            마지막 물주기
+          </Label>
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "flex-1 justify-start text-left font-normal plant-form-input",
+                    !lastWatered && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {lastWatered ? (
+                    format(lastWatered, "PPP", { locale: ko })
+                  ) : (
+                    <span>날짜 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={lastWatered}
+                  onSelect={setLastWatered}
+                  initialFocus
+                  locale={ko}
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover open={showTimePicker} onOpenChange={setShowTimePicker}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-32 justify-start text-left font-normal plant-form-input",
+                    !lastWatered && "text-muted-foreground"
+                  )}
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  {lastWatered ? (
+                    format(lastWatered, "HH:mm", { locale: ko })
+                  ) : (
+                    <span>시간 선택</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3" align="start">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={selectedHour}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 0 && value <= 23) {
+                          setSelectedHour(value);
+                        }
+                      }}
+                      className="w-16 text-center"
+                    />
+                    <span className="text-muted-foreground">시</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={selectedMinute}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 0 && value <= 59) {
+                          setSelectedMinute(value);
+                        }
+                      }}
+                      className="w-16 text-center"
+                    />
+                    <span className="text-muted-foreground">분</span>
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTimePicker(false)}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleTimeSelect(selectedHour, selectedMinute)}
+                  >
+                    확인
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         
         <div className="space-y-4">
@@ -171,6 +339,18 @@ export default function RegisterPlantScreen() {
         
         <Card className="border-0 shadow-sm">
           <CardContent className="p-6 space-y-6">
+            <h3 className="font-semibold mb-2">연동할 센서</h3>
+            <SensorSelector
+              selectedSensors={selectedSensors}
+              onSensorsChange={setSelectedSensors}
+            />
+          </CardContent>
+        </Card>
+        
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6 space-y-6">
+            <h3 className="font-semibold mb-2">적정 환경 조건</h3>
+            
             <DualRangeSlider
               label="온도 (°C)"
               minValue={temperature.min}
