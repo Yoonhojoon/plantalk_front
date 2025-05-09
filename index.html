@@ -1,33 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HomeGardener - 스마트 가드닝 앱</title>
-    <meta name="description" content="식물을 스마트하게 관리하세요. HomeGardener와 함께 더 건강한 식물 가꾸기를 시작하세요." />
-    <meta name="author" content="HomeGardener" />
-
-    <!-- PWA 관련 메타 태그 -->
-    <meta name="theme-color" content="#4CAF50" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="apple-mobile-web-app-title" content="HomeGardener" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-
-    <meta property="og:title" content="HomeGardener - 스마트 가드닝 앱" />
-    <meta property="og:description" content="식물을 스마트하게 관리하세요. HomeGardener와 함께 더 건강한 식물 가꾸기를 시작하세요." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@homegardener" />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <title>MoodGreen</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#4caf50" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -40,18 +17,16 @@
 
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register('/firebase-messaging-sw.js')
             .then(registration => {
-              console.log('ServiceWorker registration successful');
+              console.log('Firebase Service Worker registration successful:', registration);
             })
             .catch(err => {
-              console.log('ServiceWorker registration failed: ', err);
+              console.error('Firebase Service Worker registration failed:', err);
             });
         });
       }

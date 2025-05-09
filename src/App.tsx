@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useNotification } from "./hooks/useNotification";
 
 // Screens
 import LoginScreen from "./pages/LoginScreen";
@@ -22,35 +23,49 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <PlantProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner position="top-center" />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginScreen />} />
-                <Route path="/signup" element={<SignUpScreen />} />
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardScreen />} />
-                  <Route path="/plants" element={<PlantsScreen />} />
-                  <Route path="/register-plant" element={<RegisterPlantScreen />} />
-                  <Route path="/plant-detail/:id" element={<PlantDetailScreen />} />
-                  <Route path="/notifications" element={<NotificationsScreen />} />
-                  <Route path="/profile" element={<ProfileScreen />} />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </PlantProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const { token, error } = useNotification();
+
+  useEffect(() => {
+    if (token) {
+      // TODO: 토큰을 서버에 저장하는 로직 구현
+      console.log('FCM Token:', token);
+    }
+    if (error) {
+      console.error('FCM Error:', error);
+    }
+  }, [token, error]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <PlantProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner position="top-center" />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<LoginScreen />} />
+                  <Route path="/signup" element={<SignUpScreen />} />
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<DashboardScreen />} />
+                    <Route path="/plants" element={<PlantsScreen />} />
+                    <Route path="/register-plant" element={<RegisterPlantScreen />} />
+                    <Route path="/plant-detail/:id" element={<PlantDetailScreen />} />
+                    <Route path="/notifications" element={<NotificationsScreen />} />
+                    <Route path="/profile" element={<ProfileScreen />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </PlantProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
