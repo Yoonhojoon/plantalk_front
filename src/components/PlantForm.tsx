@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Thermometer, Droplet, Sun } from "lucide-react";
+import { Thermometer, Droplet, Sun, Clock } from "lucide-react";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { useToast } from "@/components/ui/use-toast";
+import DualRangeSlider from "./DualRangeSlider";
 
 interface PlantFormProps {
   onComplete?: () => void;
@@ -20,8 +20,9 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
   
   const [name, setName] = useState("");
   const [type, setType] = useState("");
-  const [location, setLocation] = useState("Indoor"); // Added location state
+  const [location, setLocation] = useState("Indoor");
   const [image, setImage] = useState("");
+  const [wateringInterval, setWateringInterval] = useState(7); // Added watering interval state
   const [environment, setEnvironment] = useState<PlantEnvironment>({
     temperature: { min: 18, max: 28 },
     light: { min: 40, max: 80 },
@@ -52,8 +53,8 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
       return;
     }
     
-    // Updated to pass all 5 required arguments
-    addPlant(name, type, location, image, environment);
+    // Fixed: Pass all required arguments including wateringInterval
+    addPlant(name, type, location, image, environment, wateringInterval);
     
     toast({
       title: "식물 등록 완료",
@@ -65,6 +66,7 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
     setType("");
     setLocation("Indoor");
     setImage("");
+    setWateringInterval(7);
     setEnvironment({
       temperature: { min: 18, max: 28 },
       light: { min: 40, max: 80 },
@@ -117,6 +119,19 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="wateringInterval">물주기 간격 (일)</Label>
+            <Input
+              id="wateringInterval"
+              type="number"
+              min={1}
+              max={30}
+              value={wateringInterval}
+              onChange={(e) => setWateringInterval(Number(e.target.value))}
+              placeholder="며칠마다 물을 주는지 입력하세요"
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label>식물 사진</Label>
             {image ? (
               <div className="relative h-40 w-full overflow-hidden rounded-md">
@@ -152,128 +167,56 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
             <h3 className="font-medium">필요 환경 조건</h3>
             
             <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Thermometer size={16} />
-                  <Label>온도 (°C)</Label>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1 block">최소</Label>
-                    <Slider
-                      value={[environment.temperature.min]}
-                      min={0}
-                      max={40}
-                      step={1}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          temperature: { ...environment.temperature, min: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.temperature.min}°C</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1 block">최대</Label>
-                    <Slider
-                      value={[environment.temperature.max]}
-                      min={0}
-                      max={40}
-                      step={1}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          temperature: { ...environment.temperature, max: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.temperature.max}°C</div>
-                  </div>
-                </div>
-              </div>
+              <DualRangeSlider
+                label="온도 (°C)"
+                minValue={environment.temperature.min}
+                maxValue={environment.temperature.max}
+                minLimit={0}
+                maxLimit={40}
+                step={1}
+                unit="°C"
+                icon={<Thermometer size={16} className="text-red-500" />}
+                onChange={(min, max) => 
+                  setEnvironment({
+                    ...environment, 
+                    temperature: { min, max }
+                  })
+                }
+              />
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Sun size={16} />
-                  <Label>조도 (%)</Label>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1 block">최소</Label>
-                    <Slider
-                      value={[environment.light.min]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          light: { ...environment.light, min: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.light.min}%</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1 block">최대</Label>
-                    <Slider
-                      value={[environment.light.max]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          light: { ...environment.light, max: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.light.max}%</div>
-                  </div>
-                </div>
-              </div>
+              <DualRangeSlider
+                label="광량 (%)"
+                minValue={environment.light.min}
+                maxValue={environment.light.max}
+                minLimit={0}
+                maxLimit={100}
+                step={5}
+                unit="%"
+                icon={<Sun size={16} className="text-yellow-500" />}
+                onChange={(min, max) => 
+                  setEnvironment({
+                    ...environment, 
+                    light: { min, max }
+                  })
+                }
+              />
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Droplet size={16} />
-                  <Label>습도 (%)</Label>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1 block">최소</Label>
-                    <Slider
-                      value={[environment.humidity.min]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          humidity: { ...environment.humidity, min: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.humidity.min}%</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1 block">최대</Label>
-                    <Slider
-                      value={[environment.humidity.max]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(values) => 
-                        setEnvironment({
-                          ...environment,
-                          humidity: { ...environment.humidity, max: values[0] }
-                        })
-                      }
-                    />
-                    <div className="mt-1 text-center text-sm">{environment.humidity.max}%</div>
-                  </div>
-                </div>
-              </div>
+              <DualRangeSlider
+                label="습도 (%)"
+                minValue={environment.humidity.min}
+                maxValue={environment.humidity.max}
+                minLimit={0}
+                maxLimit={100}
+                step={5}
+                unit="%"
+                icon={<Droplet size={16} className="text-blue-500" />}
+                onChange={(min, max) => 
+                  setEnvironment({
+                    ...environment, 
+                    humidity: { min, max }
+                  })
+                }
+              />
             </div>
           </div>
         </CardContent>

@@ -12,9 +12,8 @@ import SignUpScreen from "./pages/SignUpScreen";
 import DashboardScreen from "./pages/DashboardScreen";
 import RegisterPlantScreen from "./pages/RegisterPlantScreen";
 import NotificationsScreen from "./pages/NotificationsScreen";
-import SettingsScreen from "./pages/SettingsScreen";
 import ProfileScreen from "./pages/ProfileScreen";
-import PlantDetailScreen from "./pages/PlantDetailScreen"; // New plant detail page
+import PlantDetailScreen from "./pages/PlantDetailScreen";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import { PlantProvider } from "./contexts/PlantContext";
@@ -40,7 +39,6 @@ const App = () => (
                   <Route path="/register-plant" element={<RegisterPlantScreen />} />
                   <Route path="/plant-detail/:id" element={<PlantDetailScreen />} />
                   <Route path="/notifications" element={<NotificationsScreen />} />
-                  <Route path="/settings" element={<SettingsScreen />} />
                   <Route path="/profile" element={<ProfileScreen />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

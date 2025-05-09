@@ -1,19 +1,22 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, MapPin, Phone, Mail } from "lucide-react";
+import { ArrowLeft, User, MapPin, Phone, Mail, Moon, Sun, LogOut, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { plants } = usePlantContext();
+  const { isDarkMode, toggleTheme } = useTheme();
   
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -35,6 +38,12 @@ export default function ProfileScreen() {
     // In a real app, this would update the user profile in the backend
     setIsEditing(false);
     toast.success("프로필이 업데이트되었습니다");
+  };
+  
+  const handleLogout = () => {
+    logout();
+    toast.success("로그아웃되었습니다");
+    navigate("/login");
   };
   
   return (
@@ -129,15 +138,65 @@ export default function ProfileScreen() {
             </div>
           </div>
         </div>
+
+        <Separator />
+
+        {/* Settings section integrated into Profile */}
+        <div className="p-4">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4">
+            설정
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {isDarkMode ? <Moon size={18} className="text-gray-500 mr-3" /> : <Sun size={18} className="text-gray-500 mr-3" />}
+                <span className="text-sm">다크 모드</span>
+              </div>
+              <Switch 
+                checked={isDarkMode}
+                onCheckedChange={toggleTheme}
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <Info size={18} className="text-gray-500 mr-3" />
+              <div className="flex flex-col">
+                <span className="text-sm">앱 버전</span>
+                <span className="text-xs text-muted-foreground">1.0.0</span>
+              </div>
+            </div>
+            
+            <Button 
+              variant="destructive" 
+              className="w-full flex items-center justify-center gap-2 rounded-full mt-4"
+              onClick={handleLogout}
+            >
+              <LogOut size={16} />
+              <span>로그아웃</span>
+            </Button>
+          </div>
+        </div>
       </Card>
       
-      <Button 
-        variant={isEditing ? "default" : "outline"} 
-        className="w-full rounded-full"
-        onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
-      >
-        {isEditing ? "프로필 저장" : "프로필 수정"}
-      </Button>
+      {!isEditing && (
+        <Button 
+          variant="outline"
+          className="w-full rounded-full"
+          onClick={() => setIsEditing(true)}
+        >
+          프로필 수정
+        </Button>
+      )}
+      
+      {isEditing && (
+        <Button 
+          variant="default" 
+          className="w-full rounded-full"
+          onClick={handleSaveProfile}
+        >
+          프로필 저장
+        </Button>
+      )}
     </div>
   );
 }
