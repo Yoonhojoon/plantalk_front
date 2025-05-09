@@ -1,68 +1,90 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Notification } from '@/types/notification';
-import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'watering' | 'temperature' | 'humidity' | 'light';
+  createdAt: string;
+  read: boolean;
+}
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
+    // 더미 데이터 로드
+    const dummyNotifications: Notification[] = [
+      {
+        id: '1',
+        title: '물주기 알림',
+        message: '피스 릴리에게 물을 줄 시간이에요!',
+        type: 'watering',
+        createdAt: new Date().toISOString(),
+        read: false
+      },
+      {
+        id: '2',
+        title: '온도 경고',
+        message: '몬스테라가 너무 덥다고 해요. 온도를 낮춰주세요.',
+        type: 'temperature',
+        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30분 전
+        read: false
+      },
+      {
+        id: '3',
+        title: '습도 알림',
+        message: '산세베리아가 건조해요. 습도를 높여주세요.',
+        type: 'humidity',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2시간 전
+        read: true
+      },
+      {
+        id: '4',
+        title: '물주기 완료',
+        message: '피스 릴리에게 물을 주셨네요!',
+        type: 'watering',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1일 전
+        read: true
+      },
+      {
+        id: '5',
+        title: '광량 경고',
+        message: '몬스테라가 햇빛이 너무 강하다고 해요.',
+        type: 'light',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2일 전
+        read: true
+      }
+    ];
 
-  const fetchNotifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setNotifications(data || []);
-    } catch (error) {
-      console.error('알림을 불러오는데 실패했습니다:', error);
-      toast.error('알림을 불러오는데 실패했습니다');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === notificationId
-            ? { ...notification, read: true }
-            : notification
-        )
-      );
-    } catch (error) {
-      console.error('알림을 읽음 처리하는데 실패했습니다:', error);
-      toast.error('알림을 읽음 처리하는데 실패했습니다');
-    }
-  };
+    setNotifications(dummyNotifications);
+    setLoading(false);
+  }, []);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'yyyy년 MM월 dd일 HH:mm', { locale: ko });
+  };
+
+  const getNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'watering':
+        return '💧';
+      case 'temperature':
+        return '🌡️';
+      case 'humidity':
+        return '💨';
+      case 'light':
+        return '☀️';
+      default:
+        return '📢';
+    }
   };
 
   if (loading) {
@@ -97,25 +119,20 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               className={`p-4 rounded-lg border ${
-                notification.read ? 'bg-gray-50' : 'bg-white'
+                notification.read ? 'bg-white' : 'bg-blue-50'
               }`}
             >
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">{getNotificationIcon(notification.type)}</div>
+                <div className="flex-1">
                   <h3 className="font-semibold">{notification.title}</h3>
-                  <p className="text-gray-600 mt-1">{notification.body}</p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {formatDate(notification.created_at)}
+                  <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {formatDate(notification.createdAt)}
                   </p>
                 </div>
                 {!notification.read && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <Check className="h-5 w-5" />
-                  </Button>
+                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
                 )}
               </div>
             </div>
