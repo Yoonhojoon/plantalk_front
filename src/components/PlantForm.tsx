@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Thermometer, Droplet, Sun, Clock } from "lucide-react";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { useToast } from "@/components/ui/use-toast";
-import DualRangeSlider from "./DualRangeSlider";
+import EnvironmentSlider from "./EnvironmentSlider";
 
 interface PlantFormProps {
   onComplete?: () => void;
@@ -22,7 +22,7 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
   const [type, setType] = useState("");
   const [location, setLocation] = useState("Indoor");
   const [image, setImage] = useState("");
-  const [wateringInterval, setWateringInterval] = useState(7); // Added watering interval state
+  const [wateringInterval, setWateringInterval] = useState(7);
   const [environment, setEnvironment] = useState<PlantEnvironment>({
     temperature: { min: 18, max: 28 },
     light: { min: 40, max: 80 },
@@ -53,7 +53,6 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
       return;
     }
     
-    // Fixed: Pass all required arguments including wateringInterval
     addPlant(name, type, location, image, environment, wateringInterval);
     
     toast({
@@ -166,54 +165,69 @@ export default function PlantForm({ onComplete }: PlantFormProps) {
           <div className="space-y-4 pt-4">
             <h3 className="font-medium">필요 환경 조건</h3>
             
-            <div className="space-y-4">
-              <DualRangeSlider
+            <div className="space-y-6">
+              <EnvironmentSlider
                 label="온도 (°C)"
                 minValue={environment.temperature.min}
                 maxValue={environment.temperature.max}
-                minLimit={0}
-                maxLimit={40}
+                min={0}
+                max={40}
                 step={1}
-                unit="°C"
                 icon={<Thermometer size={16} className="text-red-500" />}
-                onChange={(min, max) => 
+                onMinChange={(value) => 
                   setEnvironment({
                     ...environment, 
-                    temperature: { min, max }
+                    temperature: { ...environment.temperature, min: value }
+                  })
+                }
+                onMaxChange={(value) => 
+                  setEnvironment({
+                    ...environment, 
+                    temperature: { ...environment.temperature, max: value }
                   })
                 }
               />
               
-              <DualRangeSlider
+              <EnvironmentSlider
                 label="광량 (%)"
                 minValue={environment.light.min}
                 maxValue={environment.light.max}
-                minLimit={0}
-                maxLimit={100}
+                min={0}
+                max={100}
                 step={5}
-                unit="%"
                 icon={<Sun size={16} className="text-yellow-500" />}
-                onChange={(min, max) => 
+                onMinChange={(value) => 
                   setEnvironment({
                     ...environment, 
-                    light: { min, max }
+                    light: { ...environment.light, min: value }
+                  })
+                }
+                onMaxChange={(value) => 
+                  setEnvironment({
+                    ...environment, 
+                    light: { ...environment.light, max: value }
                   })
                 }
               />
               
-              <DualRangeSlider
+              <EnvironmentSlider
                 label="습도 (%)"
                 minValue={environment.humidity.min}
                 maxValue={environment.humidity.max}
-                minLimit={0}
-                maxLimit={100}
+                min={0}
+                max={100}
                 step={5}
-                unit="%"
                 icon={<Droplet size={16} className="text-blue-500" />}
-                onChange={(min, max) => 
+                onMinChange={(value) => 
                   setEnvironment({
                     ...environment, 
-                    humidity: { min, max }
+                    humidity: { ...environment.humidity, min: value }
+                  })
+                }
+                onMaxChange={(value) => 
+                  setEnvironment({
+                    ...environment, 
+                    humidity: { ...environment.humidity, max: value }
                   })
                 }
               />

@@ -28,13 +28,17 @@ export default function PlantCard({ plant }: PlantCardProps) {
   const [open, setOpen] = useState(false);
   const [wateringDialogOpen, setWateringDialogOpen] = useState(false);
   
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     removePlant(plant.id);
     toast.success("식물이 삭제되었습니다");
     setOpen(false);
   };
 
-  const handleWater = () => {
+  const handleWater = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setWateringDialogOpen(true);
   };
   
@@ -87,6 +91,7 @@ export default function PlantCard({ plant }: PlantCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                setOpen(true);
               }}
             >
               <Trash2 size={16} />
@@ -160,11 +165,7 @@ export default function PlantCard({ plant }: PlantCardProps) {
                 variant="outline" 
                 size="sm"
                 className={`flex items-center ${daysUntilWatering <= 0 ? 'text-red-500 border-red-200 hover:bg-red-50' : 'text-blue-500 border-blue-200 hover:bg-blue-50'}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleWater();
-                }}
+                onClick={handleWater}
               >
                 {daysUntilWatering <= 0 ? (
                   <>
@@ -181,15 +182,15 @@ export default function PlantCard({ plant }: PlantCardProps) {
             </div>
             
             <div className="flex items-center space-x-3">
-              <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
+              <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
                 <Thermometer size={16} />
               </div>
               
-              <div className={`p-1.5 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'}`}>
+              <div className={`p-1.5 rounded-lg ${isHumidityOk ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
                 <Droplet size={16} />
               </div>
               
-              <div className={`p-1.5 rounded-lg ${isLightOk ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-500'}`}>
+              <div className={`p-1.5 rounded-lg ${isLightOk ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
                 <Sun size={16} />
               </div>
             </div>
