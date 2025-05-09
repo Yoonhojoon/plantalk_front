@@ -33,14 +33,31 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
+                maxAgeSeconds: 24 * 60 * 60
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/api\.vercel\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'vercel-api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour
               },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
           }
-        ]
+        ],
+        navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [/^(?!\/__).*/],
+        navigateFallbackDenylist: [/\.(?:png|jpg|jpeg|svg|gif)$/]
       },
     }),
   ].filter(Boolean),
