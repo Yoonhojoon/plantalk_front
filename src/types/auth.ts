@@ -16,4 +16,12 @@ export interface AuthState {
     email: string;
   } | null;
   token: string | null;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  email_verified: boolean;
+  phone_verified: boolean;
 } 

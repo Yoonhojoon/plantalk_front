@@ -19,24 +19,52 @@ export default function LoginScreen() {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error("이메일과 비밀번호를 모두 입력해주세요");
+      alert("이메일과 비밀번호를 모두 입력해주세요");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const success = await login(email, password);
-      if (success) {
-        toast.success("로그인 성공!");
-        console.log('Login successful, navigating to dashboard');
-        navigate('/dashboard', { replace: true });
-      } else {
-        toast.error("로그인 실패. 다시 시도해주세요.");
-      }
+      const response = await login({ email, password });
+      alert("로그인 성공!");
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || "오류가 발생했습니다. 다시 시도해주세요.");
+      
+      // 에러 메시지 처리
+      let errorMessage = "로그인에 실패했습니다. 다시 시도해주세요.";
+      
+      if (error.response) {
+        // 서버에서 반환한 에러
+        const status = error.response.status;
+        const data = error.response.data;
+        
+        switch (status) {
+          case 400:
+            errorMessage = data.detail || "잘못된 요청입니다.";
+            break;
+          case 401:
+            errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.";
+            break;
+          case 403:
+            errorMessage = "접근이 거부되었습니다.";
+            break;
+          case 404:
+            errorMessage = "서비스를 찾을 수 없습니다.";
+            break;
+          case 500:
+            errorMessage = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+            break;
+          default:
+            errorMessage = data.detail || "알 수 없는 오류가 발생했습니다.";
+        }
+      } else if (error.request) {
+        // 요청은 보냈지만 응답을 받지 못한 경우
+        errorMessage = "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.";
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }

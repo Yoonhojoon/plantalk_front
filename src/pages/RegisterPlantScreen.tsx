@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlantContext } from "@/contexts/PlantContext";
+import { plantService, Species } from "@/services/plantService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -31,13 +32,14 @@ interface Sensor {
 
 export default function RegisterPlantScreen() {
   const navigate = useNavigate();
-  const { addPlant } = usePlantContext();
+  const { refreshPlants } = usePlantContext();
   
   const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
+  const [speciesList, setSpeciesList] = useState<Species[]>([]);
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+  const [customSpecies, setCustomSpecies] = useState("");
   const [location, setLocation] = useState("Indoor");
-  const [image, setImage] = useState("");
-  const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
@@ -49,49 +51,88 @@ export default function RegisterPlantScreen() {
   const [wateringInterval, setWateringInterval] = useState(7);
   const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
 
-  const handleImageSelect = () => {
-    // In a real app, this would open a file picker or camera
-    // For now, we'll use placeholder images
-    const placeholderImages = [
-      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500",
-      "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=500",
-      "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500",
-      "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=500"
-    ];
-    setImage(placeholderImages[Math.floor(Math.random() * placeholderImages.length)]);
-    toast.success("이미지가 선택되었습니다!");
+  // 품종 목록 로드
+  useEffect(() => {
+    const loadSpecies = async () => {
+      try {
+        const species = await plantService.getSpecies();
+        setSpeciesList(species);
+      } catch (error) {
+        toast.error("식물 품종 목록을 불러오는데 실패했습니다.");
+      }
+    };
+    loadSpecies();
+  }, []);
+
+  // 품종 선택 시 기본값 설정
+  const handleSpeciesSelect = (speciesId: string) => {
+    if (speciesId === "custom") {
+      setSelectedSpecies(null);
+      setCustomSpecies("");
+      setImageUrl(plantService.getRandomImageUrl());
+      return;
+    }
+
+    const selected = speciesList.find(s => s.id === speciesId);
+    if (selected) {
+      setSelectedSpecies(selected);
+      setCustomSpecies("");
+      setTemperature({
+        min: selected.temp_range_min,
+        max: selected.temp_range_max
+      });
+      setHumidity({
+        min: selected.humidity_range_min,
+        max: selected.humidity_range_max
+      });
+      setLight({
+        min: selected.light_range_min,
+        max: selected.light_range_max
+      });
+      setWateringInterval(selected.watering_cycle_days);
+      setImageUrl(plantService.getDefaultImageUrl(selected.id));
+    }
   };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  // 직접 입력 시 랜덤 이미지 설정
+  const handleCustomSpeciesInput = (value: string) => {
+    setCustomSpecies(value);
+    setSelectedSpecies(null);
+    setImageUrl(plantService.getRandomImageUrl());
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !species || !location || !lastWatered) {
+    if (!name || (!selectedSpecies && !customSpecies)) {
       toast.error("필수 정보를 모두 입력해주세요");
       return;
     }
 
-    if (selectedSensors.length === 0) {
-      toast.error("최소 하나 이상의 센서를 선택해주세요");
-      return;
-    }
+    try {
+      const plantData = {
+        species_id: selectedSpecies?.id || customSpecies,
+        name,
+        location,
+        watering_cycle_days: wateringInterval,
+        last_watered_at: lastWatered?.toISOString() || new Date().toISOString(),
+        temp_range_min: temperature.min,
+        temp_range_max: temperature.max,
+        humidity_range_min: humidity.min,
+        humidity_range_max: humidity.max,
+        light_range_min: light.min,
+        light_range_max: light.max,
+        image_url: imageUrl,
+        sensor_id: selectedSensors[0]?.id
+      };
 
-    // 센서가 하나라도 있으면 모든 환경 데이터를 측정할 수 있으므로 추가 검증 불필요
-    addPlant(
-      name,
-      species,
-      location,
-      image,
-      {
-        temperature,
-        humidity,
-        light
-      },
-      wateringInterval,
-      lastWatered.toISOString()
-    );
-    
-    toast.success("식물이 등록되었습니다!");
-    navigate("/dashboard");
+      await plantService.createPlant(plantData);
+      toast.success("식물이 등록되었습니다!");
+      await refreshPlants();
+      navigate("/plants");
+    } catch (error) {
+      toast.error("식물 등록에 실패했습니다.");
+    }
   };
   
   const handleTimeSelect = (hour: number, minute: number) => {
@@ -104,297 +145,251 @@ export default function RegisterPlantScreen() {
   };
   
   return (
-    <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="mr-2" 
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate(-1)}
+          className="rounded-full"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h1 className="text-xl font-bold">새 식물 등록</h1>
+        <h1 className="text-2xl font-bold">새 식물 등록</h1>
       </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-4">
-          <Label htmlFor="name">식물 이름</Label>
-          <Input
-            id="name"
-            placeholder="예: 피스 릴리"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="plant-form-input"
-          />
-        </div>
-        
-        <div className="space-y-4">
-          <Label htmlFor="species">식물 품종</Label>
-          <div className="flex gap-2">
-            <Select
-              value={species}
-              onValueChange={setSpecies}
-            >
-              <SelectTrigger className="flex-1 plant-form-input">
-                <SelectValue placeholder="품종 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="스파티필럼">스파티필럼</SelectItem>
-                <SelectItem value="몬스테라">몬스테라</SelectItem>
-                <SelectItem value="산세베리아">산세베리아</SelectItem>
-                <SelectItem value="custom">직접 입력</SelectItem>
-              </SelectContent>
-            </Select>
-            {species === "custom" && (
-              <Input
-                placeholder="품종 입력"
-                value={species}
-                onChange={(e) => setSpecies(e.target.value)}
-                className="flex-1 plant-form-input"
-              />
-            )}
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <Label htmlFor="location">위치</Label>
-          <Select
-            value={location}
-            onValueChange={setLocation}
-          >
-            <SelectTrigger className="plant-form-input">
-              <SelectValue placeholder="위치 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Indoor">실내</SelectItem>
-              <SelectItem value="Outdoor">실외</SelectItem>
-              <SelectItem value="Balcony">발코니</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-4">
-          <Label htmlFor="lastWatered" className="flex items-center gap-2">
-            <Clock size={18} className="text-plant-green" />
-            마지막 물주기
-          </Label>
-          <div className="flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "flex-1 justify-start text-left font-normal plant-form-input",
-                    !lastWatered && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {lastWatered ? (
-                    format(lastWatered, "PPP", { locale: ko })
-                  ) : (
-                    <span>날짜 선택</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={lastWatered}
-                  onSelect={setLastWatered}
-                  initialFocus
-                  locale={ko}
-                />
-              </PopoverContent>
-            </Popover>
 
-            <Popover open={showTimePicker} onOpenChange={setShowTimePicker}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-32 justify-start text-left font-normal plant-form-input",
-                    !lastWatered && "text-muted-foreground"
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>식물 이름</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="식물 이름을 입력하세요"
+                  className="plant-form-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>식물 품종</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedSpecies?.id || "custom"}
+                    onValueChange={handleSpeciesSelect}
+                  >
+                    <SelectTrigger className="flex-1 plant-form-input">
+                      <SelectValue placeholder="품종 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {speciesList.map(species => (
+                        <SelectItem key={species.id} value={species.id}>{species.name}</SelectItem>
+                      ))}
+                      <SelectItem value="custom">직접 입력</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {selectedSpecies === null && (
+                    <Input
+                      placeholder="품종 입력"
+                      value={customSpecies}
+                      onChange={(e) => handleCustomSpeciesInput(e.target.value)}
+                      className="flex-1 plant-form-input"
+                    />
                   )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>위치</Label>
+                <Select
+                  value={location}
+                  onValueChange={setLocation}
                 >
-                  <Clock className="mr-2 h-4 w-4" />
-                  {lastWatered ? (
-                    format(lastWatered, "HH:mm", { locale: ko })
-                  ) : (
-                    <span>시간 선택</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-3" align="start">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={selectedHour}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value >= 0 && value <= 23) {
-                          setSelectedHour(value);
-                        }
-                      }}
-                      className="w-16 text-center"
-                    />
-                    <span className="text-muted-foreground">시</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="59"
-                      value={selectedMinute}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value >= 0 && value <= 59) {
-                          setSelectedMinute(value);
-                        }
-                      }}
-                      className="w-16 text-center"
-                    />
-                    <span className="text-muted-foreground">분</span>
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-end gap-2">
+                  <SelectTrigger className="plant-form-input">
+                    <SelectValue placeholder="위치 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Indoor">실내</SelectItem>
+                    <SelectItem value="Outdoor">실외</SelectItem>
+                    <SelectItem value="Balcony">발코니</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>마지막 물 준 날짜</Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal",
+                          !lastWatered && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {lastWatered ? format(lastWatered, "PPP", { locale: ko }) : "날짜 선택"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={lastWatered}
+                        onSelect={setLastWatered}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <Button
+                    type="button"
                     variant="outline"
-                    size="sm"
-                    onClick={() => setShowTimePicker(false)}
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                    className="w-[120px]"
                   >
-                    취소
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleTimeSelect(selectedHour, selectedMinute)}
-                  >
-                    확인
+                    {format(new Date().setHours(selectedHour, selectedMinute), "HH:mm")}
                   </Button>
                 </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <Label htmlFor="wateringInterval" className="flex items-center gap-2">
-            <Clock size={18} className="text-plant-green" />
-            물주기 간격 (일)
-          </Label>
-          <Input
-            id="wateringInterval"
-            type="number"
-            min="1"
-            max="60"
-            value={wateringInterval}
-            onChange={(e) => setWateringInterval(Number(e.target.value))}
-            className="plant-form-input"
-          />
-        </div>
-        
-        <div className="space-y-4">
-          <Label>식물 이미지</Label>
-          {image ? (
-            <div className="relative overflow-hidden rounded-xl h-64">
-              <img 
-                src={image} 
-                alt="선택된 식물" 
-                className="w-full h-full object-cover"
-              />
-              <Button
-                type="button"
-                className="absolute bottom-3 right-3 rounded-full bg-white text-plant-green hover:bg-white/90"
-                onClick={handleImageSelect}
-              >
-                이미지 변경
-              </Button>
+                {showTimePicker && (
+                  <div className="flex gap-2 mt-2">
+                    <Select
+                      value={selectedHour.toString()}
+                      onValueChange={(value) => setSelectedHour(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="시" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}시
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={selectedMinute.toString()}
+                      onValueChange={(value) => setSelectedMinute(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue placeholder="분" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <SelectItem key={i} value={(i * 5).toString()}>
+                            {(i * 5).toString().padStart(2, "0")}분
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {imageUrl && (
+                <div className="space-y-2">
+                  <Label>식물 이미지</Label>
+                  <div className="relative overflow-hidden rounded-xl h-64">
+                    <img 
+                      src={imageUrl} 
+                      alt="선택된 식물" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-24 flex flex-col gap-2 rounded-xl border-dashed"
-                onClick={handleImageSelect}
-              >
-                <Camera size={24} />
-                <span className="text-xs">사진 촬영</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-24 flex flex-col gap-2 rounded-xl border-dashed"
-                onClick={handleImageSelect}
-              >
-                <Image size={24} />
-                <span className="text-xs">갤러리에서 선택</span>
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6 space-y-6">
-            <h3 className="font-semibold mb-2">연동할 센서</h3>
-            <SensorSelector
-              selectedSensors={selectedSensors}
-              onSensorsChange={setSelectedSensors}
-            />
           </CardContent>
         </Card>
-        
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6 space-y-6">
-            <h3 className="font-semibold mb-2">적정 환경 조건</h3>
-            
-            <DualRangeSlider
-              label="온도 (°C)"
-              minValue={temperature.min}
-              maxValue={temperature.max}
-              minLimit={0}
-              maxLimit={40}
-              step={1}
-              unit="°C"
-              icon={<Thermometer size={18} className="text-red-500" />}
-              onChange={(min, max) => setTemperature({ min, max })}
-            />
-            
-            <DualRangeSlider
-              label="습도 (%)"
-              minValue={humidity.min}
-              maxValue={humidity.max}
-              minLimit={0}
-              maxLimit={100}
-              step={5}
-              unit="%"
-              icon={<Droplet size={18} className="text-blue-500" />}
-              onChange={(min, max) => setHumidity({ min, max })}
-            />
-            
-            <DualRangeSlider
-              label="광량 (%)"
-              minValue={light.min}
-              maxValue={light.max}
-              minLimit={0}
-              maxLimit={100}
-              step={5}
-              unit="%"
-              icon={<Sun size={18} className="text-yellow-500" />}
-              onChange={(min, max) => setLight({ min, max })}
-            />
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>연결된 센서</Label>
+                <SensorSelector
+                  selectedSensors={selectedSensors}
+                  onSensorsChange={setSelectedSensors}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>권장 온도 범위</Label>
+                <DualRangeSlider
+                  min={10}
+                  max={35}
+                  step={1}
+                  value={temperature}
+                  onChange={(value) => setTemperature(value)}
+                  unit="°C"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>권장 습도 범위</Label>
+                <DualRangeSlider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={humidity}
+                  onChange={(value) => setHumidity(value)}
+                  unit="%"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>권장 조도 범위</Label>
+                <DualRangeSlider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={light}
+                  onChange={(value) => setLight(value)}
+                  unit="%"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>물 주기 (일)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={wateringInterval}
+                  onChange={(e) => setWateringInterval(parseInt(e.target.value))}
+                  className="plant-form-input"
+                />
+              </div>
+
+              {imageUrl && (
+                <div className="space-y-2">
+                  <Label>식물 이미지</Label>
+                  <div className="relative overflow-hidden rounded-xl h-64">
+                    <img 
+                      src={imageUrl} 
+                      alt="선택된 식물" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-        
-        <Button 
-          type="submit" 
-          className="w-full bg-plant-green hover:bg-plant-dark-green text-white rounded-full h-12"
-        >
-          식물 추가
-        </Button>
+
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(-1)}
+          >
+            취소
+          </Button>
+          <Button type="submit">
+            등록하기
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Plant } from "../models/PlantModel";
+import { Plant } from "../types/plant";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Thermometer, Droplet, Sun, Droplets, Star } from "lucide-react";
+import { Trash2, Thermometer, Droplet, Sun, Droplets } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -50,12 +50,11 @@ export default function PlantCard({ plant }: PlantCardProps) {
   
   // Calculate days until next watering
   const getDaysUntilNextWatering = (): number => {
-    const lastWatered = plant.lastWatered 
-      ? new Date(plant.lastWatered) 
-      : new Date(); // Default to today if not set
+    const lastWatered = plant.last_watered_at 
+      ? new Date(plant.last_watered_at) 
+      : new Date();
     
-    const nextWatering = new Date(lastWatered);
-    nextWatering.setDate(nextWatering.getDate() + plant.wateringInterval);
+    const nextWatering = new Date(plant.next_watering_date);
     
     const today = new Date();
     const diffTime = nextWatering.getTime() - today.getTime();
@@ -180,7 +179,7 @@ export default function PlantCard({ plant }: PlantCardProps) {
         
         <div className="relative h-40 overflow-hidden">
           <img 
-            src={plant.image} 
+            src={plant.image_url} 
             alt={plant.name} 
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -191,10 +190,10 @@ export default function PlantCard({ plant }: PlantCardProps) {
             <div className="flex justify-between">
               <div>
                 <h3 className="text-white font-medium text-lg">{plant.name}</h3>
-                <p className="text-white/80 text-xs">{plant.species}</p>
+                <p className="text-white/80 text-xs">{plant.species_id}</p>
               </div>
               <div className="bg-plant-green/90 text-white text-xs font-semibold px-2 py-1 rounded-full self-start">
-                {plant.location === "Indoor" ? "실내" : plant.location === "Outdoor" ? "실외" : "발코니"}
+                {plant.location}
               </div>
             </div>
           </div>

@@ -45,7 +45,7 @@ export default function DashboardScreen() {
   return (
     <div className="container max-w-md mx-auto px-4 pt-6 pb-20 flex flex-col min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">안녕하세요, {user?.fullName?.split(' ')[0] || '사용자'}님</h1>
+        <h1 className="text-2xl font-bold">안녕하세요, {user?.user_metadata?.full_name || '사용자'}님</h1>
         <p className="text-sm text-muted-foreground">Plantalk에 오신 것을 환영합니다</p>
       </div>
 

@@ -1,16 +1,18 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { authService } from '../services/authService';
+import { LoginRequest, LoginResponse } from '../types/auth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (credentials: LoginRequest) => Promise<LoginResponse>;
   signup: (email: string, password: string, fullName: string) => Promise<boolean>;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -35,6 +37,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (session) {
         setUser(session.user);
         setIsAuthenticated(true);
+        // 토큰을 로컬 스토리지에 저장
+        localStorage.setItem('access_token', session.access_token);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('access_token');
       }
     };
 
@@ -42,8 +50,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // 인증 상태 변경 구독
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsAuthenticated(!!session);
+      if (session) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('access_token', session.access_token);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('access_token');
+      }
     });
 
     return () => {
@@ -51,28 +66,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.user) {
-        setUser(data.user);
-        setIsAuthenticated(true);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    }
+  const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
+    const response = await authService.login(credentials);
+    setIsAuthenticated(true);
+    return response;
   };
 
   const signup = async (email: string, password: string, fullName: string): Promise<boolean> => {
@@ -98,17 +95,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-      setUser(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+  const logout = () => {
+    authService.logout();
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('access_token');
   };
 
   const value = {

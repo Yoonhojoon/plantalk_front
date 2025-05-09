@@ -5,7 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 export default function PlantsScreen() {
-  const { plants } = usePlantContext();
+  const { plants, loading, error, refreshPlants } = usePlantContext();
+
+  if (loading) {
+    return (
+      <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">식물 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button 
+            onClick={refreshPlants}
+            className="bg-plant-green hover:bg-plant-dark-green rounded-full"
+          >
+            다시 시도
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
