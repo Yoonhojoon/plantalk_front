@@ -5,6 +5,7 @@ import EnvironmentSlider from "@/components/EnvironmentSlider";
 import { PlantStatus } from "@/models/PlantModel";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 
 export default function SimulationScreen() {
   const { plants, updatePlantStatus } = usePlantContext();
