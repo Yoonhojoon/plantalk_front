@@ -12,7 +12,7 @@ import LoginScreen from "./pages/LoginScreen";
 import SignUpScreen from "./pages/SignUpScreen";
 import DashboardScreen from "./pages/DashboardScreen";
 import RegisterPlantScreen from "./pages/RegisterPlantScreen";
-import NotificationsScreen from "./pages/NotificationsScreen";
+import NotificationsPage from "./pages/NotificationsPage";
 import ProfileScreen from "./pages/ProfileScreen";
 import PlantDetailScreen from "./pages/PlantDetailScreen";
 import PlantsScreen from "./pages/PlantsScreen";
@@ -54,7 +54,7 @@ const App = () => {
                     <Route path="/plants" element={<PlantsScreen />} />
                     <Route path="/register-plant" element={<RegisterPlantScreen />} />
                     <Route path="/plant-detail/:id" element={<PlantDetailScreen />} />
-                    <Route path="/notifications" element={<NotificationsScreen />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/profile" element={<ProfileScreen />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
