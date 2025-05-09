@@ -20,6 +20,7 @@ import { CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { usePlantEmotionNotification } from '@/hooks/usePlantEmotionNotification';
+import { Separator } from "@/components/ui/separator";
 
 interface Sensor {
   id: string;
@@ -189,6 +190,14 @@ export default function PlantDetailScreen() {
   useEffect(() => {
     if (id) {
       fetchSensorStatusByPlantId(id);
+      
+      // 15초마다 센서 데이터 업데이트
+      const intervalId = setInterval(() => {
+        fetchSensorStatusByPlantId(id);
+      }, 15000); // 15초
+
+      // 컴포넌트가 언마운트될 때 인터벌 정리
+      return () => clearInterval(intervalId);
     }
   }, [id]);
 
@@ -346,14 +355,6 @@ const emotionalState = getEmotionalState();
         </Button>
         <h1 className="text-xl font-bold">{plant?.name || '식물 상세'}</h1>
       </div>
-
-      {/* 알림 테스트 버튼 */}
-      <Button
-        onClick={testNotification}
-        className="w-full mb-4 bg-plant-green hover:bg-plant-dark-green"
-      >
-        알림 테스트
-      </Button>
 
       {/* Horizontal split layout - Plant Character and Status */}
       <div className="flex mb-6">
@@ -739,51 +740,124 @@ const emotionalState = getEmotionalState();
         </div>
       ) : (
         <Card className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden">
-          <CardContent className="p-4">
-            <h3 className="font-semibold mb-2">식물 정보</h3>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">품종</h4>
-                <p className="text-sm">{speciesName}</p>
-                <p className="text-sm text-muted-foreground mt-1">{speciesDescription}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">위치</h4>
-                <p className="text-sm">{plant.location === "Indoor" ? "실내" : plant.location === "Outdoor" ? "실외" : "발코니"}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">설명</h4>
-                <p className="text-sm">{description || "설명이 없습니다"}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">적정 환경</h4>
-                <p className="text-sm">온도: {plant.environment.temperature.min}°C ~ {plant.environment.temperature.max}°C</p>
-                <p className="text-sm">습도: {plant.environment.humidity.min}% ~ {plant.environment.humidity.max}%</p>
-                <p className="text-sm">광량: {plant.environment.light.min} lux ~ {plant.environment.light.max} lux</p>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              {/* 식물 기본 정보 */}
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100">
+                  {plant.image_url ? (
+                    <img 
+                      src={plant.image_url} 
+                      alt={plant.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Image size={32} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold">{plant.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{speciesName}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="px-2 py-1 bg-plant-light-green/20 text-plant-green text-xs rounded-full">
+                      {plant.location === "Indoor" ? "실내" : plant.location === "Outdoor" ? "실외" : "발코니"}
+                    </span>
+                  </div>
+                </div>
               </div>
 
+              <Separator />
+
+              {/* 식물 설명 */}
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">연동된 센서</h4>
+                <h4 className="text-sm font-semibold text-muted-foreground mb-2">식물 설명</h4>
+                <p className="text-sm leading-relaxed">
+                  {description || "아직 설명이 없습니다. 식물에 대한 설명을 추가해보세요!"}
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* 적정 환경 */}
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground mb-3">적정 환경</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                      <Thermometer size={16} className="text-red-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">온도</p>
+                      <p className="text-sm text-muted-foreground">
+                        {plant.environment.temperature.min}°C ~ {plant.environment.temperature.max}°C
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Droplet size={16} className="text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">습도</p>
+                      <p className="text-sm text-muted-foreground">
+                        {plant.environment.humidity.min}% ~ {plant.environment.humidity.max}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                      <Sun size={16} className="text-yellow-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">광량</p>
+                      <p className="text-sm text-muted-foreground">
+                        {plant.environment.light.min} lux ~ {plant.environment.light.max} lux
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* 연동된 센서 */}
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground mb-3">연동된 센서</h4>
                 <div className="space-y-2">
                   {sensors.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">연동된 센서가 없습니다</p>
+                    <div className="p-4 bg-gray-50 rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground">연동된 센서가 없습니다</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => toast.info('센서 연결 기능은 준비 중입니다.')}
+                      >
+                        센서 연결하기
+                      </Button>
+                    </div>
                   ) : (
                     sensors.map((sensor) => (
                       <div
                         key={sensor.id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                       >
-                        <div className="flex items-center gap-2">
-                          <Bluetooth
-                            size={16}
-                            className={sensor.status === 'connected' ? 'text-green-500' : 'text-red-500'}
-                          />
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full ${
+                            sensor.status === 'connected' ? 'bg-green-100' : 'bg-red-100'
+                          } flex items-center justify-center`}>
+                            <Bluetooth
+                              size={16}
+                              className={sensor.status === 'connected' ? 'text-green-500' : 'text-red-500'}
+                            />
+                          </div>
                           <div>
                             <p className="text-sm font-medium">{sensor.name}</p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mt-1">
                               <MeasurementIcons measurements={sensor.measurements} />
                               <p className="text-xs text-muted-foreground">
                                 통합 환경 센서
@@ -811,12 +885,6 @@ const emotionalState = getEmotionalState();
             </div>
           </CardContent>
         </Card>
-      )}
-      {emotion && (
-        <div className="mt-4 p-4 bg-background rounded-lg shadow">
-          <h3 className="text-lg font-semibold">현재 감정 상태</h3>
-          <p className="text-muted-foreground">{emotion}</p>
-        </div>
       )}
     </div>
   );
