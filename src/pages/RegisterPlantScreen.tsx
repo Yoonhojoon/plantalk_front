@@ -459,13 +459,13 @@ export default function RegisterPlantScreen() {
             />
             
             <DualRangeSlider
-              label="광량 (%)"
+              label="광량 (lux)"
               minValue={light.min}
               maxValue={light.max}
               minLimit={0}
-              maxLimit={100}
-              step={5}
-              unit="%"
+              maxLimit={1000}
+              step={10}
+              unit="lux"
               icon={<Sun size={18} className="text-yellow-500" />}
               onChange={(min, max) => setLight({ min, max })}
             />

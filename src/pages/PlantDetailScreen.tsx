@@ -57,9 +57,51 @@ export default function PlantDetailScreen() {
   
   const [speciesList, setSpeciesList] = useState<{ id: string, scientific_name: string }[]>([]);
   
+  const [sensorStatus, setSensorStatus] = useState({ temperature: 0, humidity: 0, light: 0 });
+  
+  const fetchSensorStatusByPlantId = async (plantId: string) => {
+    const { data: plantData, error: plantError } = await supabase
+      .from('plants')
+      .select('sensor_id')
+      .eq('id', plantId)
+      .maybeSingle();
+
+    if (plantError || !plantData?.sensor_id) {
+      console.error("sensor_id를 가져오지 못했습니다.");
+      return;
+    }
+
+    const sensorId = plantData.sensor_id;
+    console.log(sensorId);
+
+    const { data: statusData, error: statusError } = await supabase
+      .from('plant_status_logs')
+      .select('temperature, humidity, light')
+      .eq('sensor_id', sensorId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    console.log(statusData);
+
+    if (statusError) {
+      console.error("센서 상태 조회 실패", statusError);
+      return;
+    }
+
+    if (statusData) {
+      setSensorStatus({
+        temperature: statusData.temperature ?? 0,
+        humidity: statusData.humidity ?? 0,
+        light: statusData.light ?? 0,
+      });
+    }
+  };
+
   useEffect(() => {
     if (id && plants.length > 0) {
       const foundPlant = plants.find(p => p.id === id);
+      console.log(foundPlant);
       if (foundPlant) {
         // 변환
         const convertedPlant = {
@@ -117,8 +159,8 @@ export default function PlantDetailScreen() {
         // 임시 센서 데이터 (실제로는 API나 데이터베이스에서 가져와야 함)
         setSensors([
           {
-            id: '1',
-            name: '거실 센서',
+            id: 'SENSOR_01',
+            name: 'SENSOR_01',
             status: 'connected',
             signalStrength: 85,
             measurements: {
@@ -139,6 +181,12 @@ export default function PlantDetailScreen() {
     };
     fetchSpecies();
   }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchSensorStatusByPlantId(id);
+    }
+  }, [id]);
 
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
@@ -162,42 +210,67 @@ export default function PlantDetailScreen() {
     setShowTimePicker(false);
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!plant) return;
     
-    // 환경 상태 업데이트
-    updatePlantStatus(plant.id, {
-      temperature: plant.status.temperature,
-      humidity: plant.status.humidity,
-      light: plant.status.light
-    });
-    
-    // 식물 정보 업데이트
-    updatePlant(plant.id, {
-      name,
-      species,
-      location,
-      image,
-      type: description,
-      environment: {
-        temperature,
-        humidity,
-        light
-      },
-      wateringInterval,
-      lastWatered: lastWatered ? lastWatered.toISOString() : undefined
-    });
-    
-    setIsEditing(false);
-    toast.success("식물 정보가 업데이트되었습니다");
+    try {
+      console.log('업데이트할 데이터:', {
+        name,
+        species_id: species,
+        location,
+        image_url: image,
+        temp_range_min: plant.environment.temperature.min,
+        temp_range_max: plant.environment.temperature.max,
+        humidity_range_min: plant.environment.humidity.min,
+        humidity_range_max: plant.environment.humidity.max,
+        light_range_min: plant.environment.light.min,
+        light_range_max: plant.environment.light.max,
+        watering_cycle_days: wateringInterval,
+        last_watered_at: lastWatered?.toISOString()
+      });
+
+      // DB 업데이트
+      const { data, error } = await supabase
+        .from('plants')
+        .update({
+          name: name,
+          species_id: species,
+          location: location,
+          image_url: image,
+          temp_range_min: plant.environment.temperature.min,
+          temp_range_max: plant.environment.temperature.max,
+          humidity_range_min: plant.environment.humidity.min,
+          humidity_range_max: plant.environment.humidity.max,
+          light_range_min: plant.environment.light.min,
+          light_range_max: plant.environment.light.max,
+          watering_cycle_days: wateringInterval,
+          last_watered_at: lastWatered?.toISOString()
+        })
+        .eq('id', plant.id)
+        .select();
+
+      if (error) {
+        console.error('DB 업데이트 에러:', error);
+        throw error;
+      }
+
+      console.log('업데이트된 데이터:', data);
+      setIsEditing(false);
+      toast.success("식물 정보가 업데이트되었습니다");
+    } catch (error) {
+      console.error('식물 정보 업데이트 실패:', error);
+      toast.error("식물 정보 업데이트에 실패했습니다");
+    }
   };
   
   // Calculate plant emotional state based on environmental conditions
   const getEmotionalState = (): string => {
     if (!plant) return "행복해요";
     
-    const { temperature, humidity, light } = plant.status;
+    // 센서에서 받아온 실시간 값 사용!
+    const { temperature, humidity, light } = sensorStatus;
     const env = plant.environment;
+   
     
     if (temperature < env.temperature.min) return "추워요";
     if (temperature > env.temperature.max) return "더워요";
@@ -290,9 +363,15 @@ const emotionalState = getEmotionalState();
       
       {/* Horizontal split layout - Plant Character and Status */}
       <div className="flex mb-6">
-        {/* Left side (50%): Plant Character */}
+        {/* Left side (50%): Plant Image */}
         <div className="w-1/2 pr-2 flex items-center justify-center">
-          <PlantCharacter emotionalState={emotionalState} />
+          {plant.image ? (
+            <div className="rounded-full overflow-hidden bg-yellow-50 flex items-center justify-center" style={{ width: 120, height: 120 }}>
+              <img src={plant.image} alt={plant.name} className="object-cover w-full h-full" />
+            </div>
+          ) : (
+            <div className="rounded-full bg-yellow-50 flex items-center justify-center" style={{ width: 120, height: 120 }} />
+          )}
         </div>
         
         {/* Right side (50%): Plant Status */}
@@ -320,17 +399,17 @@ const emotionalState = getEmotionalState();
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Thermometer size={18} className="text-red-500 mr-2" />
-                  <span className="text-sm">온도: {plant.status.temperature}°C</span>
+                  <span className="text-sm">온도: {sensorStatus.temperature}°C</span>
                 </div>
                 
                 <div className="flex items-center">
                   <Droplet size={18} className="text-blue-500 mr-2" />
-                  <span className="text-sm">습도: {plant.status.humidity}%</span>
+                  <span className="text-sm">습도: {sensorStatus.humidity}%</span>
                 </div>
                 
                 <div className="flex items-center">
                   <Sun size={18} className="text-yellow-500 mr-2" />
-                  <span className="text-sm">광량: {plant.status.light}%</span>
+                  <span className="text-sm">광량: {sensorStatus.light} lux</span>
                 </div>
                 
                 <div className="flex items-center">
@@ -607,38 +686,62 @@ const emotionalState = getEmotionalState();
               
               <DualRangeSlider
                 label="온도 (°C)"
-                minValue={temperature.min}
-                maxValue={temperature.max}
+                minValue={plant.environment.temperature.min}
+                maxValue={plant.environment.temperature.max}
                 minLimit={0}
                 maxLimit={40}
                 step={1}
                 unit="°C"
                 icon={<Thermometer size={18} className="text-red-500" />}
-                onChange={(min, max) => setTemperature({ min, max })}
+                onChange={(min, max) => {
+                  setPlant({
+                    ...plant,
+                    environment: {
+                      ...plant.environment,
+                      temperature: { min, max }
+                    }
+                  });
+                }}
               />
               
               <DualRangeSlider
                 label="습도 (%)"
-                minValue={humidity.min}
-                maxValue={humidity.max}
+                minValue={plant.environment.humidity.min}
+                maxValue={plant.environment.humidity.max}
                 minLimit={0}
                 maxLimit={100}
                 step={5}
                 unit="%"
                 icon={<Droplet size={18} className="text-blue-500" />}
-                onChange={(min, max) => setHumidity({ min, max })}
+                onChange={(min, max) => {
+                  setPlant({
+                    ...plant,
+                    environment: {
+                      ...plant.environment,
+                      humidity: { min, max }
+                    }
+                  });
+                }}
               />
               
               <DualRangeSlider
-                label="광량 (%)"
-                minValue={light.min}
-                maxValue={light.max}
+                label="광량 (lux)"
+                minValue={plant.environment.light.min}
+                maxValue={plant.environment.light.max}
                 minLimit={0}
-                maxLimit={100}
-                step={5}
-                unit="%"
+                maxLimit={1000}
+                step={10}
+                unit="lux"
                 icon={<Sun size={18} className="text-yellow-500" />}
-                onChange={(min, max) => setLight({ min, max })}
+                onChange={(min, max) => {
+                  setPlant({
+                    ...plant,
+                    environment: {
+                      ...plant.environment,
+                      light: { min, max }
+                    }
+                  });
+                }}
               />
             </CardContent>
           </Card>
@@ -667,7 +770,7 @@ const emotionalState = getEmotionalState();
                 <h4 className="text-sm font-medium text-muted-foreground">적정 환경</h4>
                 <p className="text-sm">온도: {plant.environment.temperature.min}°C ~ {plant.environment.temperature.max}°C</p>
                 <p className="text-sm">습도: {plant.environment.humidity.min}% ~ {plant.environment.humidity.max}%</p>
-                <p className="text-sm">광량: {plant.environment.light.min}% ~ {plant.environment.light.max}%</p>
+                <p className="text-sm">광량: {plant.environment.light.min} lux ~ {plant.environment.light.max} lux</p>
               </div>
 
               <div>

@@ -116,14 +116,37 @@ export const PlantProvider = ({ children }: PlantProviderProps) => {
 
   const removePlant = async (id: string) => {
     try {
-      await PlantService.deletePlant(id);
+      // 먼저 plant_status_logs 삭제
+      const { error: logsError } = await supabase
+        .from('plant_status_logs')
+        .delete()
+        .eq('plant_id', id);
+
+      if (logsError) {
+        console.error('식물 상태 로그 삭제 실패:', logsError);
+        throw logsError;
+      }
+
+      // 그 다음 식물 삭제
+      const { error: plantError } = await supabase
+        .from('plants')
+        .delete()
+        .eq('id', id);
+
+      if (plantError) {
+        console.error('식물 삭제 실패:', plantError);
+        throw plantError;
+      }
+
       setPlants(prev => prev.filter(plant => plant.id !== id));
       if (representativePlantId === id) {
         setRepresentativePlantId(null);
       }
+      toast.success('식물이 삭제되었습니다.');
     } catch (error) {
       console.error('식물 삭제 에러:', error);
       toast.error('식물 삭제에 실패했습니다.');
+      throw error;
     }
   };
 

@@ -31,8 +31,8 @@ export default function SensorSelector({ selectedSensors, onSensorsChange }: Sen
   // 임시 센서 목록 (실제로는 블루투스 스캔 결과를 사용해야 함)
   const mockSensors: Sensor[] = [
     { 
-      id: '1', 
-      name: '거실 센서', 
+      id: 'SENSOR_01', 
+      name: 'SENSOR_01', 
       status: 'disconnected', 
       signalStrength: 85,
       measurements: {
@@ -42,8 +42,8 @@ export default function SensorSelector({ selectedSensors, onSensorsChange }: Sen
       }
     },
     { 
-      id: '2', 
-      name: '침실 센서', 
+      id: 'SENSOR_02', 
+      name: 'SENSOR_02', 
       status: 'disconnected', 
       signalStrength: 75,
       measurements: {
@@ -53,8 +53,8 @@ export default function SensorSelector({ selectedSensors, onSensorsChange }: Sen
       }
     },
     { 
-      id: '3', 
-      name: '주방 센서', 
+      id: 'SENSOR_03', 
+      name: 'SENSOR_03', 
       status: 'disconnected', 
       signalStrength: 90,
       measurements: {
