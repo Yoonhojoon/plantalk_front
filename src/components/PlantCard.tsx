@@ -175,14 +175,14 @@ export default function PlantCard({ plant }: PlantCardProps) {
                 ) : (
                   <>
                     <span className="text-xs font-bold mr-1">D-{daysUntilWatering}</span>
-                    <span className="text-xs">물주기</span>
+                    <span className="text-xs">물</span>
                   </>
                 )}
               </Button>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
+            <div className="flex items-center gap-1">
+              <div className={`p-1.5 rounded-lg ${isTemperatureOk ? 'bg-red-100 text-red-600 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-500 dark:bg-red-900 dark:text-red-300'}`}>
                 <Thermometer size={16} />
               </div>
               

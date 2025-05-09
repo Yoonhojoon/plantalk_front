@@ -12,6 +12,7 @@ import { Plant } from "@/models/PlantModel";
 import DualRangeSlider from "@/components/DualRangeSlider";
 import PlantCharacter from "@/components/PlantCharacter";
 
+
 export default function PlantDetailScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ export default function PlantDetailScreen() {
     );
   }
   
-  const emotionalState = getEmotionalState();
+const emotionalState = getEmotionalState();
   
   return (
     <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
@@ -142,18 +143,6 @@ export default function PlantDetailScreen() {
             <Pencil size={20} />
           </Button>
         )}
-      </div>
-      
-      {/* Plant Image */}
-      <div className="relative mb-6 rounded-xl overflow-hidden h-64">
-        <img 
-          src={plant.image} 
-          alt={plant.name} 
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500";
-          }}
-        />
       </div>
       
       {/* Horizontal split layout - Plant Character and Status */}

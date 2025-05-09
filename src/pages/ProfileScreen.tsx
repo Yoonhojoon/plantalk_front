@@ -76,8 +76,19 @@ export default function ProfileScreen() {
         )}
         <p className="text-sm text-muted-foreground">식물 애호가</p>
       </div>
-      
       <Card className="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden mb-6">
+        <div className="p-4">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4">
+            계정 활동
+          </h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">내 식물 수</span>
+              <span className="font-medium">{plants.length}</span>
+            </div>
+          </div>
+        </div>        
+        <Separator />
         <div className="p-4">
           <h3 className="text-sm font-semibold text-muted-foreground mb-4">
             연락처 정보
@@ -123,21 +134,8 @@ export default function ProfileScreen() {
               )}
             </div>
           </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="p-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-4">
-            계정 활동
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">내 식물 수</span>
-              <span className="font-medium">{plants.length}</span>
-            </div>
-          </div>
-        </div>
+        </div>        
+
 
         <Separator />
 

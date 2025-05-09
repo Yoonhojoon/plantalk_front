@@ -14,7 +14,7 @@ export default function DashboardScreen() {
     <div className="container max-w-md mx-auto px-4 pt-6 pb-20">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">안녕하세요, {user?.fullName?.split(' ')[0] || '사용자'}님</h1>
-        <p className="text-sm text-muted-foreground">식물 대시보드에 오신 것을 환영합니다</p>
+        <p className="text-sm text-muted-foreground">Plantalk에 오신 것을 환영합니다</p>
       </div>
 
       <div className="bg-plant-light-green/25 rounded-2xl p-4 mb-6">
@@ -33,8 +33,11 @@ export default function DashboardScreen() {
             </Button>
           </Link>
         </div>
+
+
+
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {plants.map((plant) => (
             <PlantCard key={plant.id} plant={plant} />
           ))}

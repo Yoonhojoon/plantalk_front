@@ -40,7 +40,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-plant-light-green/40 dark:bg-gray-900 flex flex-col justify-between p-6">
+    <div className="min-h-screen bg-plant-light-white/40 dark:bg-gray-900 flex flex-col justify-between p-6">
       <div className="w-full flex flex-col items-center mt-12 fade-in">
         <Logo size="large" />
       </div>
