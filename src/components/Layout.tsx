@@ -9,7 +9,7 @@ export default function Layout() {
 
   useEffect(() => {
     // 인증 상태가 변경될 때마다 로그
-    console.log('Layout - Auth Status:', { isAuthenticated, user });
+
   }, [isAuthenticated, user]);
 
   // 인증되지 않은 경우 로그인 페이지로 리다이렉트

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -27,23 +28,58 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // 현재 세션 확인
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
-        setIsAuthenticated(true);
+      try {
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('세션 체크 에러:', error);
+          throw error;
+        }
+
+        
+        if (session) {
+
+          setUser(session.user);
+          setIsAuthenticated(true);
+        } else {
+
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('세션 체크 중 에러 발생:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkSession();
 
     // 인증 상태 변경 구독
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsAuthenticated(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+
+      
+      if (event === 'SIGNED_IN' && session) {
+
+        setUser(session.user);
+        setIsAuthenticated(true);
+      } else if (event === 'SIGNED_OUT') {
+
+        setUser(null);
+        setIsAuthenticated(false);
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+
+        setUser(session.user);
+        setIsAuthenticated(true);
+      }
     });
 
     return () => {
@@ -59,6 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
+        console.error('로그인 에러:', error);
         throw error;
       }
 
@@ -70,7 +107,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('로그인 에러:', error);
+      toast.error('로그인에 실패했습니다.');
       return false;
     }
   };
@@ -88,26 +126,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
+        console.error('회원가입 에러:', error);
         throw error;
       }
 
       return true;
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('회원가입 에러:', error);
+      toast.error('회원가입에 실패했습니다.');
       return false;
     }
   };
 
   const logout = async () => {
     try {
+      console.log('로그아웃 시도');
       const { error } = await supabase.auth.signOut();
       if (error) {
+        console.error('로그아웃 에러:', error);
         throw error;
       }
+      console.log('로그아웃 성공');
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('로그아웃 에러:', error);
+      toast.error('로그아웃에 실패했습니다.');
     }
   };
 
@@ -118,6 +162,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signup,
     logout
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

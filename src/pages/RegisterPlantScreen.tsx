@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import SensorSelector from "@/components/SensorSelector";
+import { supabase } from "@/lib/supabase";
 
 interface Sensor {
   id: string;
@@ -29,25 +30,76 @@ interface Sensor {
   };
 }
 
+interface PlantSpecies {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export default function RegisterPlantScreen() {
   const navigate = useNavigate();
   const { addPlant } = usePlantContext();
   
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("");
-  const [location, setLocation] = useState("Indoor");
+  const [selectedSpeciesId, setSelectedSpeciesId] = useState("");
+  const [location, setLocation] = useState("실내");
   const [image, setImage] = useState("");
   const [description, setDescription] = useState("");
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
   const [selectedSensors, setSelectedSensors] = useState<Sensor[]>([]);
+  const [plantSpecies, setPlantSpecies] = useState<PlantSpecies[]>([]);
   
   const [temperature, setTemperature] = useState({ min: 18, max: 26 });
   const [humidity, setHumidity] = useState({ min: 40, max: 70 });
   const [light, setLight] = useState({ min: 40, max: 70 });
   const [wateringInterval, setWateringInterval] = useState(7);
   const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
+
+  useEffect(() => {
+    // 식물 품종 데이터 가져오기
+    const fetchPlantSpecies = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('plant_species')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+        setPlantSpecies(data || []);
+      } catch (error) {
+        console.error('식물 품종 데이터 로딩 에러:', error);
+        toast.error('식물 품종 데이터를 불러오는데 실패했습니다.');
+      }
+    };
+
+    fetchPlantSpecies();
+  }, []);
+
+  const handleSpeciesChange = (value: string) => {
+    setSpecies(value);
+    if (value === "custom") {
+      // 랜덤 이미지 URL 설정
+      const randomImages = [
+        "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500",
+        "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?q=80&w=500",
+        "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500",
+        "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=500"
+      ];
+      setImage(randomImages[Math.floor(Math.random() * randomImages.length)]);
+      setSelectedSpeciesId(""); // 직접 입력 시 species_id는 비움
+    } else {
+      // 선택된 품종에 따른 이미지 URL 설정
+      setImage(`/images/emotion/${value}/happy.png`);
+      // 선택된 품종의 id 찾기
+      const selectedSpecies = plantSpecies.find(s => s.name === value);
+      if (selectedSpecies) {
+        setSelectedSpeciesId(selectedSpecies.id);
+      }
+    }
+  };
 
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
@@ -62,9 +114,16 @@ export default function RegisterPlantScreen() {
     toast.success("이미지가 선택되었습니다!");
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // 로그인된 사용자 정보 가져오기
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+
     if (!name || !species || !location || !lastWatered) {
       toast.error("필수 정보를 모두 입력해주세요");
       return;
@@ -75,23 +134,45 @@ export default function RegisterPlantScreen() {
       return;
     }
 
-    // 센서가 하나라도 있으면 모든 환경 데이터를 측정할 수 있으므로 추가 검증 불필요
-    addPlant(
-      name,
-      species,
-      location,
-      image,
-      {
-        temperature,
-        humidity,
-        light
-      },
-      wateringInterval,
-      lastWatered.toISOString()
-    );
-    
-    toast.success("식물이 등록되었습니다!");
-    navigate("/dashboard");
+    if (species !== "custom" && !selectedSpeciesId) {
+      toast.error("식물 품종을 선택해주세요");
+      return;
+    }
+
+    const plantData = {
+      user_id: user.id,
+      species_id: selectedSpeciesId,
+      name: name,
+      image_url: image,
+      location: location,
+      watering_cycle_days: wateringInterval,
+      last_watered_at: lastWatered.toISOString(),
+      temp_range_min: temperature.min,
+      temp_range_max: temperature.max,
+      humidity_range_min: humidity.min,
+      humidity_range_max: humidity.max,
+      light_range_min: light.min,
+      light_range_max: light.max,
+      sensor_id: selectedSensors.length > 0 ? selectedSensors[0].id : ''
+    };
+
+    console.log('저장할 식물 데이터:', plantData);
+
+    try {
+      const { data, error } = await supabase
+        .from('plants')
+        .insert([plantData])
+        .select();
+
+      if (error) throw error;
+
+      console.log('저장된 식물 데이터:', data);
+      toast.success("식물이 등록되었습니다!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('식물 등록 에러:', error);
+      toast.error("식물 등록에 실패했습니다.");
+    }
   };
   
   const handleTimeSelect = (hour: number, minute: number) => {
@@ -134,15 +215,17 @@ export default function RegisterPlantScreen() {
           <div className="flex gap-2">
             <Select
               value={species}
-              onValueChange={setSpecies}
+              onValueChange={handleSpeciesChange}
             >
               <SelectTrigger className="flex-1 plant-form-input">
                 <SelectValue placeholder="품종 선택" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="스파티필럼">스파티필럼</SelectItem>
-                <SelectItem value="몬스테라">몬스테라</SelectItem>
-                <SelectItem value="산세베리아">산세베리아</SelectItem>
+                {plantSpecies.map((species) => (
+                  <SelectItem key={species.id} value={species.name}>
+                    {species.name}
+                  </SelectItem>
+                ))}
                 <SelectItem value="custom">직접 입력</SelectItem>
               </SelectContent>
             </Select>
@@ -167,9 +250,9 @@ export default function RegisterPlantScreen() {
               <SelectValue placeholder="위치 선택" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Indoor">실내</SelectItem>
-              <SelectItem value="Outdoor">실외</SelectItem>
-              <SelectItem value="Balcony">발코니</SelectItem>
+              <SelectItem value="실내">실내</SelectItem>
+              <SelectItem value="실외">실외</SelectItem>
+              <SelectItem value="발코니">발코니</SelectItem>
             </SelectContent>
           </Select>
         </div>

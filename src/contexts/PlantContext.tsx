@@ -1,20 +1,40 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Plant, PlantEnvironment, PlantStatus } from "../models/PlantModel";
+import { Plant } from "@/types/plant";
+import { PlantService } from "@/services/plant.service";
+import { useAuth } from "./AuthContext";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 interface PlantContextType {
   plants: Plant[];
-  addPlant: (name: string, species: string, location: string, image: string, environment: PlantEnvironment, wateringInterval: number, lastWatered?: string) => void;
-  updatePlantStatus: (id: string, status: PlantStatus) => void;
-  removePlant: (id: string) => void;
-  updatePlantWatering: (id: string, lastWatered: string) => void;
-  getPlantsNeedingAttention: () => Plant[];
-  updatePlant: (id: string, updatedPlant: Partial<Plant>) => void;
+  addPlant: (
+    species_id: string,
+    name: string,
+    image_url: string,
+    location: string,
+    watering_cycle: number,
+    last_watered: string,
+    next_watering: string,
+    temp_range_min: number,
+    temp_range_max: number,
+    humidity_range_min: number,
+    humidity_range_max: number,
+    light_range_min: number,
+    light_range_max: number,
+    sensor_id: string
+  ) => Promise<Plant>;
+  removePlant: (id: string) => Promise<void>;
+  updatePlant: (id: string, updatedPlant: Partial<Plant>) => Promise<void>;
   representativePlantId: string | null;
   setRepresentativePlant: (id: string) => void;
   clearRepresentativePlant: () => void;
 }
 
 const PlantContext = createContext<PlantContextType | undefined>(undefined);
+
+interface PlantProviderProps {
+  children: ReactNode;
+}
 
 export const usePlantContext = () => {
   const context = useContext(PlantContext);
@@ -24,169 +44,115 @@ export const usePlantContext = () => {
   return context;
 };
 
-interface PlantProviderProps {
-  children: ReactNode;
-}
-
 export const PlantProvider = ({ children }: PlantProviderProps) => {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [representativePlantId, setRepresentativePlantId] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  // Load plants and representativePlantId from localStorage on mount
+  // Load plants from Supabase when user changes
   useEffect(() => {
-    const savedPlants = localStorage.getItem('plantapp-plants');
-    if (savedPlants) {
-      setPlants(JSON.parse(savedPlants));
-    } else {
-      // Add sample plants if none exist
-      setPlants([
-        {
-          id: '1',
-          name: 'Peace Lily',
-          species: 'Spathiphyllum',
-          location: 'Indoor',
-          type: 'Flowering plant',
-          image: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=500',
-          environment: {
-            temperature: { min: 18, max: 26 },
-            light: { min: 40, max: 70 },
-            humidity: { min: 40, max: 70 }
-          },
-          status: {
-            temperature: 22,
-            light: 60,
-            humidity: 55
-          },
-          wateringInterval: 7,
-          lastWatered: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Snake Plant',
-          species: 'Sansevieria',
-          location: 'Indoor',
-          type: 'Succulent',
-          image: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=500',
-          environment: {
-            temperature: { min: 18, max: 32 },
-            light: { min: 30, max: 80 },
-            humidity: { min: 20, max: 60 }
-          },
-          status: {
-            temperature: 24,
-            light: 70,
-            humidity: 35
-          },
-          wateringInterval: 14,
-          lastWatered: new Date().toISOString()
+    const loadPlants = async () => {
+      if (user) {
+        try {
+          const plantsData = await PlantService.getPlants(user.id);
+          setPlants(plantsData);
+        } catch (error) {
+          console.error('식물 데이터 로드 에러:', error);
+          toast.error('식물 데이터를 불러오는데 실패했습니다.');
         }
-      ]);
-    }
-    const savedRepId = localStorage.getItem('plantapp-representative');
-    if (savedRepId) {
-      setRepresentativePlantId(savedRepId);
-    }
-  }, []);
-
-  // Save plants to localStorage whenever they change
-  useEffect(() => {
-    if (plants.length > 0) {
-      localStorage.setItem('plantapp-plants', JSON.stringify(plants));
-    }
-  }, [plants]);
-
-  // Save representativePlantId to localStorage whenever it changes
-  useEffect(() => {
-    if (representativePlantId) {
-      localStorage.setItem('plantapp-representative', representativePlantId);
-    } else {
-      localStorage.removeItem('plantapp-representative');
-    }
-  }, [representativePlantId]);
-
-  const addPlant = (name: string, species: string, location: string, image: string, environment: PlantEnvironment, wateringInterval: number, lastWatered?: string) => {
-    const newPlant: Plant = {
-      id: Date.now().toString(),
-      name,
-      species,
-      location,
-      type: species, // Using species as the type for now
-      image,
-      environment,
-      status: {
-        temperature: (environment.temperature.min + environment.temperature.max) / 2,
-        light: (environment.light.min + environment.light.max) / 2,
-        humidity: (environment.humidity.min + environment.humidity.max) / 2
-      },
-      wateringInterval,
-      lastWatered: lastWatered || new Date().toISOString()
+      } else {
+        setPlants([]);
+      }
     };
-    setPlants([...plants, newPlant]);
-  };
 
-  const updatePlantStatus = (id: string, status: PlantStatus) => {
-    setPlants(
-      plants.map((plant) =>
-        plant.id === id ? { ...plant, status } : plant
-      )
-    );
-  };
+    loadPlants();
+  }, [user]);
 
-  const updatePlantWatering = (id: string, lastWatered: string) => {
-    setPlants(
-      plants.map((plant) =>
-        plant.id === id ? { ...plant, lastWatered } : plant
-      )
-    );
-  };
+  const addPlant = async (
+    species_id: string,
+    name: string,
+    image_url: string,
+    location: string,
+    watering_cycle: number,
+    last_watered: string,
+    next_watering: string,
+    temp_range_min: number,
+    temp_range_max: number,
+    humidity_range_min: number,
+    humidity_range_max: number,
+    light_range_min: number,
+    light_range_max: number,
+    sensor_id: string
+  ) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('사용자가 로그인되어 있지 않습니다.');
 
-  const removePlant = (id: string) => {
-    setPlants(plants.filter((plant) => plant.id !== id));
-    // 대표 식물이 삭제되면 대표 해제
-    if (representativePlantId === id) {
-      setRepresentativePlantId(null);
+      const newPlant = await PlantService.addPlant({
+        species_id,
+        name,
+        image_url,
+        location,
+        watering_cycle,
+        last_watered,
+        next_watering,
+        temp_range_min,
+        temp_range_max,
+        humidity_range_min,
+        humidity_range_max,
+        light_range_min,
+        light_range_max,
+        user_id: user.id,
+        sensor_id
+      });
+
+      setPlants(prev => [...prev, newPlant]);
+      return newPlant;
+    } catch (error) {
+      console.error('식물 추가 실패:', error);
+      throw error;
     }
   };
 
-  const getPlantsNeedingAttention = () => {
-    return plants.filter((plant) => {
-      const { temperature, light, humidity } = plant.status;
-      const env = plant.environment;
-
-      return (
-        temperature < env.temperature.min ||
-        temperature > env.temperature.max ||
-        light < env.light.min ||
-        light > env.light.max ||
-        humidity < env.humidity.min ||
-        humidity > env.humidity.max
-      );
-    });
+  const removePlant = async (id: string) => {
+    try {
+      await PlantService.deletePlant(id);
+      setPlants(prev => prev.filter(plant => plant.id !== id));
+      if (representativePlantId === id) {
+        setRepresentativePlantId(null);
+      }
+    } catch (error) {
+      console.error('식물 삭제 에러:', error);
+      toast.error('식물 삭제에 실패했습니다.');
+    }
   };
 
-  const updatePlant = (id: string, updatedPlant: Partial<Plant>) => {
-    setPlants(prev => prev.map(plant => 
-      plant.id === id 
-        ? { ...plant, ...updatedPlant }
-        : plant
-    ));
+  const updatePlant = async (id: string, updatedPlant: Partial<Plant>) => {
+    try {
+      const result = await PlantService.updatePlant(id, updatedPlant);
+      setPlants(prev => prev.map(plant => 
+        plant.id === id ? result : plant
+      ));
+    } catch (error) {
+      console.error('식물 업데이트 에러:', error);
+      toast.error('식물 정보 업데이트에 실패했습니다.');
+    }
   };
 
   const setRepresentativePlant = (id: string) => {
     setRepresentativePlantId(id);
+    localStorage.setItem('plantapp-representative', id);
   };
 
   const clearRepresentativePlant = () => {
     setRepresentativePlantId(null);
+    localStorage.removeItem('plantapp-representative');
   };
 
   const value = {
     plants,
     addPlant,
-    updatePlantStatus,
     removePlant,
-    updatePlantWatering,
-    getPlantsNeedingAttention,
     updatePlant,
     representativePlantId,
     setRepresentativePlant,

@@ -18,6 +18,7 @@ import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 interface Sensor {
   id: string;
@@ -54,31 +55,61 @@ export default function PlantDetailScreen() {
   const [lastWatered, setLastWatered] = useState<Date | undefined>(new Date());
   const [sensors, setSensors] = useState<Sensor[]>([]);
   
+  const [speciesList, setSpeciesList] = useState<{ id: string, scientific_name: string }[]>([]);
+  
   useEffect(() => {
     if (id && plants.length > 0) {
       const foundPlant = plants.find(p => p.id === id);
       if (foundPlant) {
-        setPlant(foundPlant);
-        setName(foundPlant.name);
-        setSpecies(foundPlant.species);
-        setLocation(foundPlant.location);
-        setImage(foundPlant.image);
-        setDescription(foundPlant.type || "");
+        // 변환
+        const convertedPlant = {
+          ...foundPlant,
+          environment: {
+            temperature: {
+              min: foundPlant.temp_range_min,
+              max: foundPlant.temp_range_max,
+            },
+            humidity: {
+              min: foundPlant.humidity_range_min,
+              max: foundPlant.humidity_range_max,
+            },
+            light: {
+              min: foundPlant.light_range_min,
+              max: foundPlant.light_range_max,
+            },
+          },
+          status: foundPlant.status || {
+            temperature: 0,
+            humidity: 0,
+            light: 0,
+          },
+          wateringInterval: foundPlant.watering_cycle_days,
+          lastWatered: foundPlant.last_watered_at,
+          image: foundPlant.image_url,
+          species: foundPlant.species_id,
+          type: '', // 필요시 기본값
+        };
+        setPlant(convertedPlant);
+        setName(convertedPlant.name);
+        setSpecies(convertedPlant.species);
+        setLocation(convertedPlant.location);
+        setImage(convertedPlant.image);
+        setDescription(convertedPlant.type || "");
         setTemperature({
-          min: foundPlant.environment.temperature.min,
-          max: foundPlant.environment.temperature.max
+          min: convertedPlant.environment.temperature.min,
+          max: convertedPlant.environment.temperature.max
         });
         setHumidity({
-          min: foundPlant.environment.humidity.min,
-          max: foundPlant.environment.humidity.max
+          min: convertedPlant.environment.humidity.min,
+          max: convertedPlant.environment.humidity.max
         });
         setLight({
-          min: foundPlant.environment.light.min,
-          max: foundPlant.environment.light.max
+          min: convertedPlant.environment.light.min,
+          max: convertedPlant.environment.light.max
         });
-        setWateringInterval(foundPlant.wateringInterval);
-        if (foundPlant.lastWatered) {
-          const date = new Date(foundPlant.lastWatered);
+        setWateringInterval(convertedPlant.wateringInterval);
+        if (convertedPlant.lastWatered) {
+          const date = new Date(convertedPlant.lastWatered);
           setLastWatered(date);
           setSelectedHour(date.getHours());
           setSelectedMinute(date.getMinutes());
@@ -100,6 +131,14 @@ export default function PlantDetailScreen() {
       }
     }
   }, [id, plants]);
+
+  useEffect(() => {
+    const fetchSpecies = async () => {
+      const { data } = await supabase.from('plant_species').select('id, scientific_name');
+      if (data) setSpeciesList(data);
+    };
+    fetchSpecies();
+  }, []);
 
   const handleImageSelect = () => {
     // In a real app, this would open a file picker or camera
@@ -213,6 +252,8 @@ const emotionalState = getEmotionalState();
       )}
     </div>
   );
+  
+  const speciesName = speciesList.find(s => s.id === plant?.species)?.scientific_name || plant?.species;
   
   return (
     <div className="container max-w-md mx-auto px-4 pt-4 pb-20">
@@ -609,7 +650,7 @@ const emotionalState = getEmotionalState();
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">품종</h4>
-                <p className="text-sm">{plant.species}</p>
+                <p className="text-sm">{speciesName}</p>
               </div>
               
               <div>

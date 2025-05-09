@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { usePlantContext } from "@/contexts/PlantContext";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import PlantEmotionUpdater from "./PlantEmotionUpdater";
 
 interface PlantCardProps {
   plant: Plant;
@@ -96,6 +97,7 @@ export default function PlantCard({ plant }: PlantCardProps) {
 
   return (
     <Link to={`/plant-detail/${plant.id}`} className="block">
+      <PlantEmotionUpdater plantId={plant.id} />
       <Card className="plant-card border-0 relative">
         {/* 대표 식물 뱃지 및 별표 버튼 */}
         <div className="absolute top-2 left-2 z-10 flex items-center gap-1">

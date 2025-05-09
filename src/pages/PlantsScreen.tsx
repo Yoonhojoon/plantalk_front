@@ -31,7 +31,36 @@ export default function PlantsScreen() {
       ) : (
         <div className="grid grid-cols-2 gap-4">
           {plants.map((plant) => (
-            <PlantCard key={plant.id} plant={plant} />
+            <PlantCard
+              key={plant.id}
+              plant={{
+                ...plant,
+                environment: {
+                  temperature: {
+                    min: plant.temp_range_min,
+                    max: plant.temp_range_max,
+                  },
+                  humidity: {
+                    min: plant.humidity_range_min,
+                    max: plant.humidity_range_max,
+                  },
+                  light: {
+                    min: plant.light_range_min,
+                    max: plant.light_range_max,
+                  },
+                },
+                wateringInterval: plant.watering_cycle_days,
+                lastWatered: plant.last_watered_at,
+                image: plant.image_url,
+                species: plant.species_id,
+                type: '',
+                status: {
+                  temperature: 0,
+                  humidity: 0,
+                  light: 0,
+                },
+              }}
+            />
           ))}
         </div>
       )}

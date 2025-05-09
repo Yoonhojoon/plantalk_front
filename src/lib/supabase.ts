@@ -12,4 +12,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL과 Anon Key가 설정되지 않았습니다.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey); 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    storageKey: 'moodgreen-auth-token',
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+}); 
