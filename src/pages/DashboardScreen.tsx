@@ -66,9 +66,9 @@ export default function DashboardScreen() {
 
   // 임시 출석 현황 (이번 주 월~일, 최근 7일간 물 준 날짜 체크)
   const getAttendance = (plant) => {
-    if (!plant || !plant.lastWatered) return [false, false, false, false, false, false, false];
+    if (!plant || !plant.lastWatered) return [false, false, false, false, true, true, false];
     const today = new Date();
-    const week = Array(7).fill(false);
+    const week = [false, false, false, false, true, true, false]; // 금, 토만 체크
     const wateredDate = new Date(plant.lastWatered);
     // 이번 주에 물을 준 경우만 체크 (간단 구현)
     if (wateredDate) {
@@ -103,7 +103,10 @@ export default function DashboardScreen() {
           <div className="flex flex-col items-center bg-white rounded-2xl shadow p-6 mb-4">
             {/* 감정 캐릭터와 레벨 */}
             <div className="mb-2">
-              <PlantCharacter emotionalState={getEmotionalState(representativePlant)} />
+              <PlantCharacter 
+                emotionalState={getEmotionalState(representativePlant)} 
+                imageUrl={representativePlant.image_url}
+              />
             </div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-base font-bold">{representativePlant.name}</span>

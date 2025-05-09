@@ -359,13 +359,10 @@ const emotionalState = getEmotionalState();
       <div className="flex mb-6">
         {/* Left side (50%): Plant Image */}
         <div className="w-1/2 pr-2 flex items-center justify-center">
-          {plant.image ? (
-            <div className="rounded-full overflow-hidden bg-yellow-50 flex items-center justify-center" style={{ width: 120, height: 120 }}>
-              <img src={plant.image} alt={plant.name} className="object-cover w-full h-full" />
-            </div>
-          ) : (
-            <div className="rounded-full bg-yellow-50 flex items-center justify-center" style={{ width: 120, height: 120 }} />
-          )}
+          <PlantCharacter 
+            emotionalState={emotionalState} 
+            imageUrl={plant.image_url}
+          />
         </div>
         
         {/* Right side (50%): Plant Status */}
