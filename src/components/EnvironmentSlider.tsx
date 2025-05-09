@@ -43,14 +43,14 @@ export default function EnvironmentSlider({
           <Slider
             value={[minValue]}
             min={min}
-            max={maxValue}
+            max={max}
             step={step}
             onValueChange={(values) => onMinChange(values[0])}
-            className="bg-blue-100 dark:bg-blue-900"
+            className="bg-blue-100 dark:bg-blue-900/30"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>{min}</span>
-            <span>{maxValue}</span>
+            <span>{max}</span>
           </div>
         </div>
         
@@ -61,14 +61,14 @@ export default function EnvironmentSlider({
           </div>
           <Slider
             value={[maxValue]}
-            min={minValue}
+            min={min}
             max={max}
             step={step}
             onValueChange={(values) => onMaxChange(values[0])}
-            className="bg-red-100 dark:bg-red-900"
+            className="bg-red-100 dark:bg-red-900/30"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>{minValue}</span>
+            <span>{min}</span>
             <span>{max}</span>
           </div>
         </div>

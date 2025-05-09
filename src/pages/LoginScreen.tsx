@@ -45,7 +45,7 @@ export default function LoginScreen() {
         <Logo size="large" />
       </div>
       
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-md mx-auto mt-auto mb-12">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <Input
