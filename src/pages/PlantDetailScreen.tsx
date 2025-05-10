@@ -774,7 +774,7 @@ const emotionalState = getEmotionalState();
               <div>
                 <h4 className="text-sm font-semibold text-muted-foreground mb-2">식물 설명</h4>
                 <p className="text-sm leading-relaxed">
-                  {description || "아직 설명이 없습니다. 식물에 대한 설명을 추가해보세요!"}
+                  {speciesDescription}
                 </p>
               </div>
 

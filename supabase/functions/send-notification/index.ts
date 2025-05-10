@@ -1,123 +1,84 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { JWT } from 'npm:google-auth-library@9'
+import serviceAccount from '../service-account.json' with { type: 'json' }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Max-Age': '86400',
-};
+interface Notification {
+  id: string
+  user_id: string
+  body: string
+}
 
-serve(async (req) => {
-  // CORS preflight 요청 처리
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
-  }
+interface WebhookPayload {
+  type: 'INSERT'
+  table: string
+  record: Notification
+  schema: 'public'
+}
 
-  try {
-    // 요청 본문 파싱
-    let body;
-    const contentType = req.headers.get('content-type');
-    console.log("contentType:", contentType);
-    if (!contentType || !contentType.includes('application/json')) {
-      return new Response(
-        JSON.stringify({ error: 'Content-Type이 application/json이어야 합니다.' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+)
 
-    try {
-      const text = await req.text();
-      console.log('Received request body:', text);
-      body = JSON.parse(text);
-      console.log("수신된 body:", JSON.stringify(body, null, 2));
-
-    } catch (e) {
-      console.error('JSON 파싱 에러:', e);
-      return new Response(
-        JSON.stringify({ 
-          error: '잘못된 JSON 형식입니다.',
-          details: e.message
-        }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    console.log('Parsed request body:', body);
-
-    const { fcmToken, notification, data } = body;
-
-    if (!fcmToken) {
-      return new Response(
-        JSON.stringify({ error: 'FCM 토큰이 필요합니다.' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const FIREBASE_SERVER_KEY = Deno.env.get('FIREBASE_SERVER_KEY');
-    if (!FIREBASE_SERVER_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'Firebase 서버 키가 설정되지 않았습니다.' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // FCM 메시지 전송
-    const fcmPayload = {
-      to: fcmToken,
-      notification,
-      data,
-    };
-
-    console.log('Sending FCM payload:', fcmPayload);
-
-    const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
+Deno.serve(async (req) => {
+  const payload: WebhookPayload = await req.json()
+  const { data } = await supabase
+    .from('profiles')
+    .select('fcm_token')
+    .eq('id', payload.record.user_id)
+    .single()
+  const fcmToken = data!.fcm_token as string
+  const accessToken = await getAccessToken({
+    clientEmail: serviceAccount.client_email,
+    privateKey: serviceAccount.private_key,
+  })
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+    {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `key=${FIREBASE_SERVER_KEY}`,
+        Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(fcmPayload),
-    });
-
-    const fcmResult = await fcmResponse.json();
-    console.log('FCM response:', fcmResult);
-
-    return new Response(
-      JSON.stringify({
-        success: fcmResponse.ok,
-        result: fcmResult
+      body: JSON.stringify({
+        message: {
+          token: fcmToken,
+          notification: {
+            title: `Notification from Supabase`,
+            body: payload.record.body,
+          },
+        },
       }),
-      { 
-        status: fcmResponse.ok ? 200 : fcmResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  } catch (error) {
-    console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || '알 수 없는 오류가 발생했습니다.',
-        details: error.toString()
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    }
+  )
+  const resData = await res.json()
+  if (res.status < 200 || 299 < res.status) {
+    throw resData
   }
-});
+  return new Response(JSON.stringify(resData), {
+    headers: { 'Content-Type': 'application/json' },
+  })
+})
+
+const getAccessToken = ({
+  clientEmail,
+  privateKey,
+}: {
+  clientEmail: string
+  privateKey: string
+}): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const jwtClient = new JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    })
+    jwtClient.authorize((err, tokens) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      resolve(tokens!.access_token!)
+    })
+  })
+}
